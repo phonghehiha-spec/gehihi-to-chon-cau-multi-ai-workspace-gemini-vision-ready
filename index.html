@@ -1,0 +1,3927 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gehihi Tớ Chọn Cậu — Multi-AI Workspace (Gemini Vision Ready)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <!-- React 18 + ReactDOM 18 + Babel Standalone -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        overflow: hidden;
+      }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(220, 38, 38, 0.25); border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(220, 38, 38, 0.45); }
+    </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // ============================================================================
+    // 1. INLINE SVG ICONS (Zero external icon dependencies)
+    // ============================================================================
+    const Icon = ({ d, className = "w-4 h-4", viewBox = "0 0 24 24", fill = "none" }) => (
+      <svg viewBox={viewBox} fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {Array.isArray(d) ? d.map((path, i) => <path key={i} d={path} />) : <path d={d} />}
+      </svg>
+    );
+
+    const Plus = (p) => <Icon {...p} d={["M12 5v14", "M5 12h14"]} />;
+    const Search = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+      </svg>
+    );
+    const Eye = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+    const Bug = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <path d="m8 2 1.88 1.88" /><path d="M14.12 3.88 16 2" /><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+        <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" /><path d="M12 20v-9" />
+        <path d="M6.53 9C4.6 8.8 3 7.1 3 5" /><path d="M6 13H2" /><path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+        <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" /><path d="M22 13h-4" /><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+      </svg>
+    );
+    const Layers = (p) => <Icon {...p} d={["m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z", "m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65", "m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"]} />;
+    const Code2 = (p) => <Icon {...p} d={["m18 16 4-4-4-4", "m6 8-4 4 4 4", "m14.5 4-5 16"]} />;
+    const Mic = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
+      </svg>
+    );
+    const ArrowUp = (p) => <Icon {...p} d={["m5 12 7-7 7 7", "M12 19V5"]} />;
+    const Square = (p) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" className={p.className || "w-4 h-4"}>
+        <rect width="16" height="16" x="4" y="4" rx="2" />
+      </svg>
+    );
+    const ChevronDown = (p) => <Icon {...p} d="m6 9 6 6 6-6" />;
+    const ChevronRight = (p) => <Icon {...p} d="m9 18 6-6-6-6" />;
+    const PanelLeft = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" />
+      </svg>
+    );
+    const KeyRound = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+      </svg>
+    );
+    const ImageIcon = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+      </svg>
+    );
+    const FileText = (p) => <Icon {...p} d={["M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", "M14 2v4a2 2 0 0 0 2 2h4", "M10 9H8", "M16 13H8", "M16 17H8"]} />;
+    const X = (p) => <Icon {...p} d={["M18 6 6 18", "m6 6 12 12"]} />;
+    const Copy = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      </svg>
+    );
+    const Check = (p) => <Icon {...p} d="M20 6 9 17l-5-5" />;
+    const Play = (p) => <Icon {...p} fill="currentColor" d="m6 3 14 9-14 9V3z" />;
+    const RefreshCw = (p) => <Icon {...p} d={["M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", "M8 16H3v5"]} />;
+    const Trash2 = (p) => <Icon {...p} d={["M3 6h18", "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"]} />;
+    const Sparkles = (p) => <Icon {...p} d={["m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"]} />;
+    const CheckCircle2 = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
+      </svg>
+    );
+    const Sun = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
+    );
+    const Moon = (p) => <Icon {...p} d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />;
+    const Wand2 = (p) => <Icon {...p} d={["m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z", "m14 7 3 3"]} />;
+    const Box = (p) => <Icon {...p} d={["M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z", "m3.3 7 8.7 5 8.7-5", "M12 22V12"]} />;
+    const Coins = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /><path d="M7 6h1v4" />
+      </svg>
+    );
+    const BrainCircuit = (p) => <Icon {...p} d={["M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z", "M9 13a4.5 4.5 0 0 0 3-4", "M12 13h4", "M12 18h6a2 2 0 0 1 2 2v1", "M12 8h8", "M16 8V5a2 2 0 0 1 2-2"]} />;
+    const Maximize2 = (p) => <Icon {...p} d={["M15 3h6v6", "M9 21H3v-6", "M21 3l-7 7", "M3 21l7-7"]} />;
+    const Minimize2 = (p) => <Icon {...p} d={["M4 14h6v6", "M20 10h-6V4", "M14 10l7-7", "M3 21l7-7"]} />;
+    const Download = (p) => <Icon {...p} d={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "m7 10 5 5 5-5", "M12 15V3"]} />;
+    const ExternalLink = (p) => <Icon {...p} d={["M15 3h6v6", "M10 14 21 3", "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"]} />;
+    const ShoppingBag = (p) => <Icon {...p} d={["M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z", "M3 6h18", "M16 10a4 4 0 0 1-8 0"]} />;
+    const VideoIcon = (p) => <Icon {...p} d={["m22 8-6 4 6 4V8Z", "M14 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Z"]} />;
+    const Lock = (p) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={p.className || "w-4 h-4"}>
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    );
+
+    // ============================================================================
+    // 2. POKÉBALL SVG LOGO COMPONENT
+    // ============================================================================
+    const PokeballLogo = ({ className = "w-8 h-8", animated = false }) => (
+      <svg
+        viewBox="0 0 36 36"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`group select-none transition-transform duration-300 hover:rotate-12 ${animated ? 'animate-pulse' : ''} ${className}`}
+      >
+        <defs>
+          <linearGradient id="pokeballRedGrad" x1="6" y1="3" x2="30" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FF3B30" />
+            <stop offset="55%" stopColor="#EE1515" />
+            <stop offset="100%" stopColor="#C81E1E" />
+          </linearGradient>
+          <linearGradient id="pokeballWhiteGrad" x1="6" y1="18" x2="30" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#E4E4E0" />
+          </linearGradient>
+        </defs>
+        <path d="M 2.5 18 A 15.5 15.5 0 0 0 33.5 18 Z" fill="url(#pokeballWhiteGrad)" />
+        <path d="M 2.5 18 A 15.5 15.5 0 0 1 33.5 18 Z" fill="url(#pokeballRedGrad)" />
+        <ellipse cx="12.5" cy="8.5" rx="4.8" ry="2.2" transform="rotate(-25 12.5 8.5)" fill="#FFFFFF" fillOpacity="0.32" />
+        <line x1="2.2" y1="18" x2="33.8" y2="18" stroke="#141413" strokeWidth="3.2" strokeLinecap="round" />
+        <circle cx="18" cy="18" r="15.5" stroke="#141413" strokeWidth="2.4" />
+        <circle cx="18" cy="18" r="5.6" fill="#F5F5F4" stroke="#141413" strokeWidth="2.4" />
+        <circle cx="18" cy="18" r="2.9" fill="#FFFFFF" stroke="#D97757" strokeWidth="1.2" />
+      </svg>
+    );
+
+    // ============================================================================
+    // 3. THINKING PRESETS & MODEL CATALOG (GEMINI VISION FIRST + CLAUDE & GPT)
+    // ============================================================================
+    const DEFAULT_USER_CLAUDE_KEY = '';
+    const ADMIN_PASSCODE = '152002';
+
+    const DEFAULT_BLENDER_5_MASTER_PROMPT = `[CHUẨN LẬP TRÌNH ADDON BLENDER 5.0 (BLENDER 5.0 PYTHON API MASTER GUIDE - ÁP DỤNG CHO MỌI MODEL)]:
+Khi người dùng yêu cầu viết code Python, Script hoặc Addon cho Blender, bạn BẮT BUỘC tuân thủ nghiêm ngặt chuẩn API của Blender 5.0 / 4.x sau đây để người dùng cài đặt và chạy thành công 100% ngay lần đầu tiên:
+1. KHAI BÁO bl_info CHUẨN BLENDER 5.0:
+   - Phải có đầy đủ dictionary \`bl_info\` ở đầu file với \`"blender": (5, 0, 0)\`, \`"name"\`, \`"author"\`, \`"version": (1, 0, 0)\`, \`"location": "View3D > Sidebar (N-Panel) > Gehihi Tool"\`, \`"description"\`, \`"category": "Object"\`.
+2. CẬP NHẬT API MỚI NHẤT CỦA BLENDER 5.0 (TUYỆT ĐỐI KHÔNG DÙNG API CŨ ĐÃ BỊ XÓA):
+   - Context Override: BẮT BUỘC dùng \`with bpy.context.temp_override(**override_kwargs):\` thay vì truyền dictionary trực tiếp vào \`bpy.ops\` như Blender 3.x cũ.
+   - Auto Smooth / Shade Smooth: Thuộc tính \`mesh.use_auto_smooth\` đã bị loại bỏ hoàn toàn. Hãy dùng \`bpy.ops.object.shade_smooth()\` hoặc thêm Modifier "Smooth by Angle".
+   - Principled BSDF Shader Nodes: Sử dụng đúng tên socket của Blender 4.x/5.0: \`'Specular IOR Level'\` (thay cho Specular), \`'Transmission Weight'\` (thay cho Transmission), \`'Coat Weight'\` (thay cho Clearcoat), \`'Sheen Weight'\` (thay cho Sheen), \`'Emission Color'\` và \`'Emission Strength'\`.
+   - Đồ họa Viewport 2D/3D: Tuyệt đối KHÔNG import module \`bgl\` (đã bị xóa). Bắt buộc dùng module \`gpu\` và \`gpu_extras.batch.batch_for_shader\`.
+   - Khai báo Property (PEP 526 Type Annotations): Mọi thuộc tính của \`bpy.types.PropertyGroup\` và \`bpy.types.Operator\` PHẢI dùng dấu hai chấm (\`:\`), tuyệt đối không dùng dấu bằng (\`=\`). Ví dụ: \`bevel_width: bpy.props.FloatProperty(name="Width", default=0.02, min=0.0)\`.
+3. CẤU TRÚC ADDON HOÀN CHỈNH & AN TOÀN:
+   - Luôn kiểm tra ngữ cảnh an toàn (\`context.active_object\`, \`context.selected_objects\`, kiểm tra \`obj.type == 'MESH'\` và chuyển về Object Mode nếu cần trước khi dùng \`bpy.ops.object\`).
+   - Có đầy đủ \`bpy.types.PropertyGroup\`, \`bpy.types.Operator\` (kèm \`bl_options = {'REGISTER', 'UNDO'}\`), và \`bpy.types.Panel\` hiển thị trực quan trên N-Panel (\`bl_space_type = 'VIEW_3D'\`, \`bl_region_type = 'UI'\`).
+   - Có tuple \`CLASSES = (...)\`, hàm \`register()\` và \`unregister()\` bọc \`try...except\` an toàn và kết thúc bằng \`if __name__ == "__main__": register()\`.
+   - Xuất toàn bộ mã nguồn hoàn chỉnh trong 1 khối \`\`\`python ... \`\`\` duy nhất, TUYỆT ĐỐI KHÔNG viết tắt bằng \`# TODO\` hay \`...\`.`;
+
+    const THINKING_PRESETS = [
+      {
+        id: 'off',
+        label: 'Tắt Think',
+        shortLabel: 'Think: Off',
+        budget: 0,
+        effort: 'none',
+        badge: 'Fast',
+        description: 'Phản hồi tức thì, không dùng token suy luận mở rộng.'
+      },
+      {
+        id: 'adaptive',
+        label: 'Thích ứng (Adaptive)',
+        shortLabel: 'Think: Auto',
+        budget: 4096,
+        effort: 'medium',
+        badge: 'Khuyên dùng',
+        description: 'Tự động bật suy luận theo độ khó câu hỏi & phân tích hình ảnh.'
+      },
+      {
+        id: 'low',
+        label: 'Think Nhanh (Low)',
+        shortLabel: 'Think: 1K',
+        budget: 1024,
+        effort: 'low',
+        badge: '1,024 tok',
+        description: 'Suy luận nhanh, tiết kiệm token cho câu hỏi vừa phải.'
+      },
+      {
+        id: 'medium',
+        label: 'Think Cân bằng (Med)',
+        shortLabel: 'Think: 4K',
+        budget: 4096,
+        effort: 'medium',
+        badge: '4,096 tok',
+        description: 'Tối ưu cho đọc hiểu ảnh, viết Blender Addon & giải quyết vấn đề.'
+      },
+      {
+        id: 'high',
+        label: 'Think Chuyên sâu (High)',
+        shortLabel: 'Think: 8K',
+        budget: 8192,
+        effort: 'high',
+        badge: '8,192 tok',
+        description: 'Phân tích kiến trúc phần mềm, đọc tài liệu phức tạp và thuật toán.'
+      },
+      {
+        id: 'custom',
+        label: 'Tùy chỉnh Budget',
+        shortLabel: 'Think: Custom',
+        budget: 6144,
+        effort: 'high',
+        badge: 'Custom',
+        description: 'Tự kéo thanh trượt điều chỉnh số Token suy luận (1,024 – 64,000).'
+      }
+    ];
+
+    const AI_MODELS = [
+      // Google Gemini Vision Series (Built-in & Custom API Key ready)
+      {
+        id: 'gemini-3-flash-preview',
+        label: 'Gemini 3 Flash (Vision Tích Hợp)',
+        badge: 'Vision Ready',
+        series: 'gemini',
+        provider: 'gemini',
+        apiModel: 'gemini-3-flash-preview',
+        supportsThinking: true,
+        recommendedThink: 'medium',
+        description: 'Google Gemini 3 Flash · Đọc & phân tích hình ảnh trực tiếp (Chạy ngay cả khi chưa nhập Key)',
+        color: '#2563EB'
+      },
+      {
+        id: 'gemini-2-5-flash',
+        label: 'Gemini 2.5 Flash',
+        badge: 'Google Fast Vision',
+        series: 'gemini',
+        provider: 'gemini',
+        apiModel: 'gemini-2.5-flash',
+        supportsThinking: true,
+        recommendedThink: 'low',
+        description: 'Google Gemini 2.5 Flash · Phản hồi siêu tốc, hỗ trợ đọc nhiều ảnh (inline_data) & OCR',
+        color: '#3B82F6'
+      },
+      {
+        id: 'gemini-2-5-pro',
+        label: 'Gemini 2.5 Pro',
+        badge: 'Google Pro Vision',
+        series: 'gemini',
+        provider: 'gemini',
+        apiModel: 'gemini-2.5-pro',
+        supportsThinking: true,
+        recommendedThink: 'high',
+        description: 'Google Gemini 2.5 Pro · Đa phương thức chuyên sâu, đọc ảnh kỹ thuật & lập trình phức tạp',
+        color: '#1D4ED8'
+      },
+      // Claude Series
+      {
+        id: 'claude-sonnet-4-5',
+        label: 'Claude Sonnet 4.5',
+        badge: 'Popular',
+        series: 'claude-4',
+        provider: 'anthropic',
+        apiModel: 'claude-sonnet-4-5-20250929',
+        supportsThinking: true,
+        recommendedThink: 'medium',
+        description: 'Anthropic Claude Sonnet 4.5 · Mô hình toàn diện cho lập trình, Vision & suy luận',
+        color: '#DC2626'
+      },
+      {
+        id: 'claude-opus-4-5',
+        label: 'Claude Opus 4.5',
+        badge: 'Opus 4.5',
+        series: 'claude-4',
+        provider: 'anthropic',
+        apiModel: 'claude-opus-4-5-20251124',
+        supportsThinking: true,
+        recommendedThink: 'high',
+        description: 'Anthropic Claude Opus 4.5 · Xử lý tác vụ phức tạp và suy luận chiều sâu',
+        color: '#B91C1C'
+      },
+      {
+        id: 'claude-3-7-sonnet',
+        label: 'Claude 3.7 Sonnet',
+        badge: 'Thinking',
+        series: 'claude-3',
+        provider: 'anthropic',
+        apiModel: 'claude-3-7-sonnet-latest',
+        supportsThinking: true,
+        recommendedThink: 'medium',
+        description: 'Anthropic Claude 3.7 Sonnet · Hỗ trợ Extended Thinking, Vision & Artifacts',
+        color: '#EA580C'
+      },
+      // OpenAI GPT Series
+      {
+        id: 'gpt-4o',
+        label: 'GPT-4o (Omni Vision)',
+        badge: 'Omni Vision',
+        series: 'gpt',
+        provider: 'openai',
+        apiModel: 'gpt-4o',
+        supportsThinking: false,
+        recommendedThink: 'off',
+        description: 'OpenAI GPT-4o · Nhận diện hình ảnh, phân tích chi tiết & viết code',
+        color: '#10B981'
+      },
+      {
+        id: 'gpt-4-1',
+        label: 'GPT-4.1',
+        badge: '1M Context',
+        series: 'gpt',
+        provider: 'openai',
+        apiModel: 'gpt-4.1',
+        supportsThinking: false,
+        recommendedThink: 'off',
+        description: 'OpenAI GPT-4.1 · Chuyên gia lập trình, phân tích hình ảnh chi tiết & chuẩn xác',
+        color: '#059669'
+      },
+      {
+        id: 'openai-o3',
+        label: 'OpenAI o3',
+        badge: 'Reasoning',
+        series: 'gpt',
+        provider: 'openai',
+        apiModel: 'o3',
+        supportsThinking: true,
+        recommendedThink: 'high',
+        description: 'OpenAI o3 · Mô hình suy luận chuyên sâu cho Toán học, Khoa học & Vision',
+        color: '#047857'
+      }
+    ];
+
+    const QUICK_SUGGESTION_CARDS = [
+      {
+        id: 'sug-sample-vision',
+        title: 'Tạo Ảnh Mẫu & Test Gemini Đọc Ảnh Ngay',
+        icon: Eye,
+        prompt: 'Hãy đọc toàn bộ chữ, số liệu biểu đồ và các chi tiết kỹ thuật có trong bức ảnh này rồi phân tích chi tiết cho tôi.'
+      },
+      {
+        id: 'sug-upload-vision',
+        title: 'Tải Ảnh Lên Để Đọc & Phân Tích (OCR / Vision)',
+        icon: ImageIcon,
+        prompt: 'Hãy đọc và phân tích chi tiết hình ảnh này (trích xuất văn bản nếu có, giải thích bố cục và nội dung chính).'
+      },
+      {
+        id: 'sug-blender',
+        title: 'Viết Blender 5.0 Addon (.PY)',
+        icon: Box,
+        prompt: 'Hãy viết một Addon Blender 5.0 hoàn chỉnh bằng Python (bpy) có bảng điều khiển trên N-Panel giúp tự động căn tâm Pivot về đáy (Origin to Bottom), thêm Bevel + Shade Smooth và đổi tên Object hàng loạt.'
+      },
+      {
+        id: 'sug-game',
+        title: 'Code Game HTML5 Chạy Thử Ngay',
+        icon: Wand2,
+        prompt: 'Hãy code cho tôi một game Bắn Máy Bay Không Gian (Space Shooter) hoàn chỉnh trong 1 file HTML với hiệu ứng hạt nổ và tính điểm.'
+      }
+    ];
+
+    const INITIAL_CHATS = [
+      {
+        id: 'chat-welcome',
+        title: 'Đã sửa lỗi Gemini đọc & phân tích ảnh',
+        pinned: true,
+        updatedAt: '2026-11-08T15:30:00Z',
+        modelId: 'gemini-3-flash-preview',
+        messages: [
+          {
+            id: 'm-1',
+            role: 'user',
+            content: 'App hiện tại đã đọc và phân tích được hình ảnh bằng Gemini API chưa?',
+            timestamp: '15:20',
+            attachments: []
+          },
+          {
+            id: 'm-2',
+            role: 'assistant',
+            provider: 'gemini',
+            thinkingPresetLabel: 'Thích ứng (Adaptive)',
+            thinkingText: 'Kiểm tra luồng xử lý ảnh đa phương thức (Multimodal Vision) cho Gemini API:\n1. Chuẩn hóa ảnh qua Canvas & tách riêng mime_type + chuỗi Base64 thuần (loại bỏ tiền tố data:image/...;base64,).\n2. Đóng gói đúng cấu trúc inlineData / inline_data trong mảng parts của Gemini generateContent.\n3. Hỗ trợ cả Gemini tích hợp sẵn (chạy ngay không cần nhập Key) lẫn Gemini API Key cá nhân.',
+            timestamp: '15:21',
+            content: `Chào bạn! Tôi đã **khắc phục hoàn toàn lỗi không đọc được ảnh của Gemini API** trong ứng dụng của bạn:
+
+1. **Chuẩn hóa định dạng \`inlineData\` cho Gemini API**: Tự động tách \`mimeType\` (\`image/jpeg\`, \`image/png\`, \`image/webp\`) và cắt bỏ hoàn toàn tiền tố \`data:image/...;base64,\` trước khi gửi lên endpoint \`generateContent\`.
+2. **Nén & Tối ưu kích thước ảnh tự động**: Ảnh chụp màn hình hoặc ảnh dung lượng lớn sẽ được chuẩn hóa tự động để không bao giờ bị lỗi vượt quá giới hạn Payload khi gửi nhiều ảnh cùng lúc.
+3. **Giữ nguyên ngữ cảnh ảnh trong lịch sử hội thoại**: Bạn có thể gửi 1 hoặc nhiều ảnh, sau đó hỏi tiếp các câu hỏi phụ ở lượt chat sau mà Gemini vẫn nhớ bức ảnh trước đó.
+4. **Tách biệt chế độ "👁️ Phân tích Ảnh AI (Vision)" và "🔍 Tìm Phụ kiện Xe"**: Mặc định khi gửi ảnh, Gemini sẽ đọc chữ (OCR), giải bài tập, phân tích biểu đồ hoặc mô tả ảnh tự nhiên thay vì bị ép vào khung tìm phụ kiện xe như bản cũ.
+5. **Trình kiểm tra Payload (nút \`Debug Payload\` ở góc trên)**: Giúp bạn xem trực tiếp cấu trúc JSON \`contents -> parts -> inlineData\` thực tế gửi lên Gemini API.
+
+👉 **Thử ngay:** Nhấn nút **"+ Ảnh mẫu Test Vision"** bên dưới khung chat hoặc dán (\`Ctrl+V\`) / tải bất kỳ bức ảnh nào lên và bấm Gửi!`
+          }
+        ]
+      }
+    ];
+
+    // ============================================================================
+    // 4. IMAGE PREPROCESSING & SAMPLE TEST IMAGE GENERATOR FOR GEMINI VISION
+    // ============================================================================
+    async function normalizeImageFileForGemini(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Không thể đọc tệp ảnh: " + file.name));
+        reader.onload = () => {
+          const rawDataUrl = String(reader.result || '');
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const MAX_DIM = 1600;
+              let w = img.naturalWidth || img.width || 800;
+              let h = img.naturalHeight || img.height || 600;
+              const needsResize = w > MAX_DIM || h > MAX_DIM || file.size > 2.5 * 1024 * 1024;
+              const isSupportedMime = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+
+              if (!needsResize && isSupportedMime) {
+                const commaIdx = rawDataUrl.indexOf(',');
+                const pureBase64 = commaIdx !== -1 ? rawDataUrl.slice(commaIdx + 1).trim() : rawDataUrl.trim();
+                resolve({
+                  name: file.name || 'image.png',
+                  type: 'image',
+                  mimeType: file.type || 'image/png',
+                  width: w,
+                  height: h,
+                  size: file.size,
+                  dataUrl: rawDataUrl,
+                  base64Data: pureBase64
+                });
+                return;
+              }
+
+              if (w > MAX_DIM || h > MAX_DIM) {
+                if (w > h) {
+                  h = Math.round((h * MAX_DIM) / w);
+                  w = MAX_DIM;
+                } else {
+                  w = Math.round((w * MAX_DIM) / h);
+                  h = MAX_DIM;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+
+              const outputMime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+              const normalizedDataUrl = canvas.toDataURL(outputMime, 0.9);
+              const commaIdx = normalizedDataUrl.indexOf(',');
+              const pureBase64 = commaIdx !== -1 ? normalizedDataUrl.slice(commaIdx + 1).trim() : normalizedDataUrl.trim();
+
+              resolve({
+                name: file.name || 'image.jpg',
+                type: 'image',
+                mimeType: outputMime,
+                width: w,
+                height: h,
+                size: Math.round((pureBase64.length * 3) / 4),
+                dataUrl: normalizedDataUrl,
+                base64Data: pureBase64
+              });
+            } catch (err) {
+              const commaIdx = rawDataUrl.indexOf(',');
+              const pureBase64 = commaIdx !== -1 ? rawDataUrl.slice(commaIdx + 1).trim() : rawDataUrl.trim();
+              resolve({
+                name: file.name || 'image.png',
+                type: 'image',
+                mimeType: file.type || 'image/png',
+                width: 0,
+                height: 0,
+                size: file.size,
+                dataUrl: rawDataUrl,
+                base64Data: pureBase64
+              });
+            }
+          };
+          img.onerror = () => {
+            const commaIdx = rawDataUrl.indexOf(',');
+            const pureBase64 = commaIdx !== -1 ? rawDataUrl.slice(commaIdx + 1).trim() : rawDataUrl.trim();
+            resolve({
+              name: file.name || 'image.png',
+              type: 'image',
+              mimeType: file.type || 'image/png',
+              width: 0,
+              height: 0,
+              size: file.size,
+              dataUrl: rawDataUrl,
+              base64Data: pureBase64
+            });
+          };
+          img.src = rawDataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function createSampleVisionTestAttachment() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 760;
+      canvas.height = 440;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 760, 440);
+      grad.addColorStop(0, '#FFF5F5');
+      grad.addColorStop(1, '#FEF2F2');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 760, 440);
+
+      ctx.strokeStyle = '#DC2626';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, 724, 404);
+
+      ctx.fillStyle = '#DC2626';
+      ctx.fillRect(18, 18, 724, 64);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 22px Inter, sans-serif';
+      ctx.fillText('BÁO CÁO KIỂM THỬ GEMINI VISION AI — Q4/2026', 38, 58);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(38, 102, 330, 296);
+      ctx.strokeStyle = '#FECACA';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(38, 102, 330, 296);
+
+      ctx.fillStyle = '#991B1B';
+      ctx.font = 'bold 17px Inter, sans-serif';
+      ctx.fillText('1. Thông số Hóa đơn & Thiết bị:', 54, 134);
+
+      ctx.fillStyle = '#18181B';
+      ctx.font = '15px Inter, sans-serif';
+      const specs = [
+        '• Mã đơn hàng: #GH-2026-8899',
+        '• Sản phẩm: Mâm xe Brembo CNC 18 inch',
+        '• Chất liệu: Hợp kim nhôm 6061-T6',
+        '• Trọng lượng: 7.45 kg / chiếc',
+        '• Giá niêm yết: 14.500.000 VNĐ',
+        '• Trạng thái: Đã kiểm định chất lượng (PASS)',
+        '• Công thức kiểm thử: E = m * c^2 + 2026'
+      ];
+      specs.forEach((line, idx) => {
+        ctx.fillText(line, 54, 168 + idx * 31);
+      });
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(390, 102, 330, 296);
+      ctx.strokeRect(390, 102, 330, 296);
+
+      ctx.fillStyle = '#991B1B';
+      ctx.font = 'bold 17px Inter, sans-serif';
+      ctx.fillText('2. Biểu đồ Hiệu suất Đọc Ảnh (%):', 408, 134);
+
+      const bars = [
+        { label: 'Q1', val: 72, color: '#F87171' },
+        { label: 'Q2', val: 84, color: '#EF4444' },
+        { label: 'Q3', val: 91, color: '#DC2626' },
+        { label: 'Q4', val: 99, color: '#16A34A' }
+      ];
+
+      bars.forEach((b, i) => {
+        const x = 425 + i * 70;
+        const maxH = 180;
+        const barH = Math.round((b.val / 100) * maxH);
+        const y = 345 - barH;
+
+        ctx.fillStyle = b.color;
+        ctx.fillRect(x, y, 44, barH);
+
+        ctx.fillStyle = '#18181B';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText(b.val + '%', x + 5, y - 8);
+        ctx.fillText(b.label, x + 11, 368);
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const pureBase64 = dataUrl.split(',')[1];
+      return {
+        id: `att-sample-${Date.now()}`,
+        name: 'bao_cao_kiem_thu_gemini_vision.png',
+        type: 'image',
+        mimeType: 'image/png',
+        width: 760,
+        height: 440,
+        size: Math.round((pureBase64.length * 3) / 4),
+        dataUrl,
+        base64Data: pureBase64
+      };
+    }
+
+    // ============================================================================
+    // 5. INTENT DETECTION & CODE HELPERS
+    // ============================================================================
+    function extractArtifactsFromContent(content) {
+      if (!content) return [];
+      const fence = "`" + "`" + "`";
+      const regex = new RegExp(fence + "([a-zA-Z0-9_-]+)?\\s*\\n([\\s\\S]*?)" + fence, "g");
+      const blocks = [];
+      let match;
+      let index = 0;
+      while ((match = regex.exec(content)) !== null) {
+        const rawLang = (match[1] || 'code').toLowerCase().trim();
+        const code = match[2].trim();
+        const isBlenderPython =
+          rawLang === 'python' ||
+          rawLang === 'py' ||
+          code.includes('import bpy') ||
+          code.includes('bl_info');
+        const isPreviewable =
+          !isBlenderPython &&
+          (rawLang === 'html' ||
+            rawLang === 'svg' ||
+            code.includes('<!DOCTYPE html>') ||
+            code.includes('<html') ||
+            code.includes('<svg'));
+        blocks.push({
+          id: `artifact-${index++}`,
+          language: isBlenderPython ? 'python' : rawLang,
+          code,
+          isPreviewable,
+          isBlenderPython
+        });
+      }
+      return blocks;
+    }
+
+    function detectUserPromptIntent(rawPrompt, forcedMode = 'auto', hasImageAttachment = false) {
+      const text = (rawPrompt || '').trim();
+      const lower = text.toLowerCase();
+
+      if (forcedMode === 'vision') {
+        return {
+          mode: 'vision-analysis',
+          isBlender: false,
+          isGame: false,
+          isNewCreation: false,
+          label: '👁️ Phân tích Hình ảnh Chi tiết (Gemini Vision)'
+        };
+      }
+      if (forcedMode === 'visual') {
+        return {
+          mode: 'visual-search',
+          isBlender: false,
+          isGame: false,
+          isNewCreation: false,
+          label: '🔍 Tìm Phụ kiện Xe, YouTube & Sàn TMĐT'
+        };
+      }
+      if (forcedMode === 'chat') {
+        return { mode: 'chat', isBlender: false, isGame: false, isNewCreation: false, label: '💬 Trò chuyện & Đọc ảnh tự nhiên' };
+      }
+      if (forcedMode === 'addon') {
+        return { mode: 'addon-tool', isBlender: true, isGame: false, isNewCreation: true, label: '🐍 Ép xuất Blender Script (.PY)' };
+      }
+      if (forcedMode === 'html') {
+        return { mode: 'html-code', isBlender: false, isGame: lower.includes('game') || lower.includes('trò chơi'), isNewCreation: true, label: '⚡ Ép xuất File HTML' };
+      }
+
+      const isExplicitEcommerceOrVehicleSearch =
+        /\b(sàn giao dịch|sàn thương mại|shopee|lazada|tiki|amazon|aliexpress|link youtube|mua ở đâu|giá bao nhiêu|phụ tùng|phụ kiện xe|bonbanh|chợ tốt xe|otofun)\b/i.test(lower);
+
+      if (isExplicitEcommerceOrVehicleSearch) {
+        return {
+          mode: 'visual-search',
+          isBlender: false,
+          isGame: false,
+          isNewCreation: false,
+          label: '🔍 Tìm Chi Tiết Xe, YouTube & Sàn TMĐT'
+        };
+      }
+
+      if (hasImageAttachment) {
+        return {
+          mode: 'vision-analysis',
+          isBlender: false,
+          isGame: false,
+          isNewCreation: false,
+          label: '👁️ Đọc & Phân tích Ảnh Đa phương thức (Vision)'
+        };
+      }
+
+      const isBlender =
+        /\b(blender|bpy|bmesh|bl_info|addon|add-on|n-panel|operator|mesh|modifier|bevel|pivot|origin|uv|rigging|armature|shader node|geometry node|scripting)\b/i.test(lower);
+
+      if (isBlender) {
+        return {
+          mode: 'addon-tool',
+          isBlender: true,
+          isGame: false,
+          isNewCreation: true,
+          label: '🐍 Blender Python Scripting (.PY)'
+        };
+      }
+
+      const isHtmlOrGame =
+        /\b(code|viết code|lập trình|tạo web|trang web|website|web app|landing page|dashboard|form|calculator|máy tính|game|trò chơi|flappy|caro|rắn săn mồi|snake|bắn máy bay|bắn súng|đua xe|2048|breakout|html|css|canvas|ứng dụng)\b/i.test(lower);
+
+      if (isHtmlOrGame) {
+        return {
+          mode: 'html-code',
+          isBlender: false,
+          isGame: /\b(game|trò chơi|flappy|caro|rắn|snake|bắn|đua xe|2048|breakout)\b/i.test(lower),
+          isNewCreation: true,
+          label: '⚡ Code File HTML & Chạy Thử'
+        };
+      }
+
+      return {
+        mode: 'chat',
+        isBlender: false,
+        isGame: false,
+        isNewCreation: false,
+        label: '💬 Trò chuyện Đa năng'
+      };
+    }
+
+    function getFileExtensionForLang(lang = '') {
+      const l = lang.toLowerCase();
+      if (l === 'python' || l === 'py') return 'py';
+      if (l === 'html' || l === 'htm') return 'html';
+      if (l === 'javascript' || l === 'js') return 'js';
+      if (l === 'csharp' || l === 'cs' || l === 'c#') return 'cs';
+      if (l === 'json') return 'json';
+      if (l === 'css') return 'css';
+      return 'txt';
+    }
+
+    function synthesizeBlenderPythonScript(promptText, modelLabel = 'Gehihi') {
+      const cleanReq = (promptText || 'Tự động xử lý Mesh & Object trong Blender').replace(/"/g, "'").trim();
+      const lower = cleanReq.toLowerCase();
+      const hasOriginBottom = /origin|pivot|tâm|đáy|bottom/i.test(lower);
+      const hasBevel = /bevel|vát cạnh|bo góc|smooth/i.test(lower);
+
+      const lines = [
+        'bl_info = {',
+        '    "name": "Gehihi Blender 5.0 Tool — ' + cleanReq.slice(0, 38) + '",',
+        '    "author": "Gehihi Workspace (' + modelLabel + ')",',
+        '    "version": (1, 5, 0),',
+        '    "blender": (5, 0, 0),',
+        '    "location": "View3D > Sidebar (N-Panel) > Gehihi Tool",',
+        '    "description": "' + cleanReq.slice(0, 90) + '",',
+        '    "category": "Object",',
+        '}',
+        '',
+        'import bpy',
+        'from mathutils import Vector, Matrix',
+        '',
+        'class GEHIHI_PG_Settings(bpy.types.PropertyGroup):',
+        '    use_origin_bottom: bpy.props.BoolProperty(',
+        '        name="Căn Pivot về đáy (Origin to Bottom)",',
+        '        default=' + (hasOriginBottom ? 'True' : 'True') + ',',
+        '    )',
+        '    use_bevel: bpy.props.BoolProperty(',
+        '        name="Thêm Bevel Modifier",',
+        '        default=' + (hasBevel ? 'True' : 'False') + ',',
+        '    )',
+        '    bevel_width: bpy.props.FloatProperty(',
+        '        name="Độ rộng Bevel",',
+        '        default=0.02, min=0.0001, max=1.0,',
+        '    )',
+        '    bevel_segments: bpy.props.IntProperty(',
+        '        name="Số phân đoạn Bevel",',
+        '        default=3, min=1, max=16,',
+        '    )',
+        '    rename_prefix: bpy.props.StringProperty(',
+        '        name="Tiền tố tên Object",',
+        '        default="GH_Asset_",',
+        '    )',
+        '',
+        'def set_object_origin_to_bottom(obj):',
+        '    if obj.type != "MESH" or not obj.data.vertices:',
+        '        return',
+        '    mw = obj.matrix_world',
+        '    world_verts = [mw @ v.co for v in obj.data.vertices]',
+        '    min_z = min(v.z for v in world_verts)',
+        '    center_x = sum(v.x for v in world_verts) / len(world_verts)',
+        '    center_y = sum(v.y for v in world_verts) / len(world_verts)',
+        '    bottom_center_world = Vector((center_x, center_y, min_z))',
+        '    bottom_center_local = mw.inverted() @ bottom_center_world',
+        '    obj.data.transform(Matrix.Translation(-bottom_center_local))',
+        '    obj.matrix_world.translation = bottom_center_world',
+        '',
+        'class GEHIHI_OT_ExecuteMain(bpy.types.Operator):',
+        '    bl_idname = "gehihi.execute_main_script"',
+        '    bl_label = "Thực thi Script (' + cleanReq.slice(0, 26) + ')"',
+        '    bl_options = {"REGISTER", "UNDO"}',
+        '',
+        '    def execute(self, context):',
+        '        props = context.scene.gehihi_tool_props',
+        '        selected = [o for o in context.selected_objects if o.type == "MESH"]',
+        '        if not selected:',
+        '            bpy.ops.mesh.primitive_monkey_add(size=1.8, location=(0, 0, 1.0))',
+        '            selected = [context.active_object]',
+        '',
+        '        for idx, obj in enumerate(selected, start=1):',
+        '            context.view_layer.objects.active = obj',
+        '            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)',
+        '            if props.rename_prefix.strip():',
+        '                obj.name = f"{props.rename_prefix.strip()}{idx:02d}"',
+        '            if props.use_origin_bottom:',
+        '                set_object_origin_to_bottom(obj)',
+        '            if props.use_bevel:',
+        '                mod = obj.modifiers.get("Gehihi_Bevel") or obj.modifiers.new(name="Gehihi_Bevel", type="BEVEL")',
+        '                mod.width = props.bevel_width',
+        '                mod.segments = props.bevel_segments',
+        '                mod.limit_method = "ANGLE"',
+        '        self.report({"INFO"}, f"Đã xử lý thành công {len(selected)} Mesh Object!")',
+        '        return {"FINISHED"}',
+        '',
+        'class GEHIHI_PT_MainPanel(bpy.types.Panel):',
+        '    bl_label = "Gehihi Blender Scripting"',
+        '    bl_idname = "GEHIHI_PT_main_panel"',
+        '    bl_space_type = "VIEW_3D"',
+        '    bl_region_type = "UI"',
+        '    bl_category = "Gehihi Tool"',
+        '',
+        '    def draw(self, context):',
+        '        layout = self.layout',
+        '        props = context.scene.gehihi_tool_props',
+        '        box = layout.box()',
+        '        box.label(text="Cấu hình thông số:", icon="TOOL_SETTINGS")',
+        '        box.prop(props, "rename_prefix")',
+        '        box.prop(props, "use_origin_bottom")',
+        '        box.prop(props, "use_bevel")',
+        '        if props.use_bevel:',
+        '            col = box.column(align=True)',
+        '            col.prop(props, "bevel_width")',
+        '            col.prop(props, "bevel_segments")',
+        '        layout.separator()',
+        '        row = layout.row(align=True)',
+        '        row.scale_y = 1.5',
+        '        row.operator("gehihi.execute_main_script", icon="PLAY")',
+        '',
+        'CLASSES = (',
+        '    GEHIHI_PG_Settings,',
+        '    GEHIHI_OT_ExecuteMain,',
+        '    GEHIHI_PT_MainPanel,',
+        ')',
+        '',
+        'def register():',
+        '    for cls in CLASSES:',
+        '        try:',
+        '            bpy.utils.unregister_class(cls)',
+        '        except Exception:',
+        '            pass',
+        '        bpy.utils.register_class(cls)',
+        '    bpy.types.Scene.gehihi_tool_props = bpy.props.PointerProperty(type=GEHIHI_PG_Settings)',
+        '',
+        'def unregister():',
+        '    if hasattr(bpy.types.Scene, "gehihi_tool_props"):',
+        '        del bpy.types.Scene.gehihi_tool_props',
+        '    for cls in reversed(CLASSES):',
+        '        try:',
+        '            bpy.utils.unregister_class(cls)',
+        '        except Exception:',
+        '            pass',
+        '',
+        'if __name__ == "__main__":',
+        '    register()'
+      ];
+      return lines.join('\n');
+    }
+
+    function synthesizeTailoredHtmlCode(promptText) {
+      const cleanReq = (promptText || 'Ứng dụng Web Tương tác').replace(/["<>]/g, '').trim();
+      const lower = cleanReq.toLowerCase();
+      const closeScript = '<' + '/script>';
+
+      if (/bắn máy bay|space|shooter|bắn súng|phi thuyền|alien/i.test(lower)) {
+        return [
+          '<!DOCTYPE html>',
+          '<html lang="vi"><head><meta charset="UTF-8" />',
+          '<title>Space Shooter — ' + cleanReq.slice(0, 32) + '</title>',
+          '<script src="https://cdn.tailwindcss.com">' + closeScript,
+          '</head><body class="bg-slate-950 text-white flex flex-col items-center justify-center min-h-screen p-4 select-none">',
+          '<div class="mb-3 flex items-center gap-4 text-sm font-bold">',
+          '  <span class="px-3 py-1 rounded-full bg-red-600">🚀 Space Shooter</span>',
+          '  <span>Điểm: <strong id="sc" class="text-amber-400">0</strong></span>',
+          '  <span class="text-xs text-slate-400">Di chuột hoặc chạm để điều khiển & bắn tự động</span>',
+          '</div>',
+          '<canvas id="cv" width="440" height="520" class="rounded-2xl border-2 border-red-500/60 bg-slate-900 shadow-2xl cursor-crosshair"></canvas>',
+          '<script>',
+          'const cv = document.getElementById("cv"), ctx = cv.getContext("2d");',
+          'let px = 220, py = 460, score = 0, frame = 0, bullets = [], enemies = [], stars = [];',
+          'for (let i=0;i<50;i++) stars.push({x:Math.random()*440,y:Math.random()*520,s:Math.random()*2+0.5});',
+          'cv.addEventListener("mousemove", e => { const r=cv.getBoundingClientRect(); px = Math.max(24, Math.min(416, e.clientX - r.left)); });',
+          'cv.addEventListener("touchmove", e => { e.preventDefault(); const r=cv.getBoundingClientRect(); px = Math.max(24, Math.min(416, e.touches[0].clientX - r.left)); }, {passive:false});',
+          'function loop() {',
+          '  frame++; ctx.fillStyle = "#090D16"; ctx.fillRect(0,0,440,520);',
+          '  ctx.fillStyle = "#475569"; stars.forEach(st => { st.y=(st.y+st.s)%520; ctx.fillRect(st.x,st.y,st.s,st.s); });',
+          '  if (frame % 10 === 0) bullets.push({x:px, y:py-18});',
+          '  if (frame % 32 === 0) enemies.push({x:Math.random()*380+30, y:-20, vy:2+Math.random()*1.8});',
+          '  ctx.fillStyle = "#EF4444"; ctx.beginPath(); ctx.moveTo(px, py-18); ctx.lineTo(px-16, py+14); ctx.lineTo(px+16, py+14); ctx.closePath(); ctx.fill();',
+          '  ctx.fillStyle = "#FACC15"; bullets.forEach(b => { b.y -= 8; ctx.fillRect(b.x-2, b.y, 4, 12); });',
+          '  bullets = bullets.filter(b => b.y > -20);',
+          '  enemies.forEach((en, ei) => {',
+          '    en.y += en.vy; ctx.font = "24px sans-serif"; ctx.textAlign = "center"; ctx.fillText("👾", en.x, en.y);',
+          '    bullets.forEach((b, bi) => {',
+          '      if (Math.hypot(b.x - en.x, b.y - en.y) < 20) { enemies.splice(ei,1); bullets.splice(bi,1); score += 10; document.getElementById("sc").innerText = score; }',
+          '    });',
+          '    if (en.y > 530) { score = Math.max(0, score - 5); enemies.splice(ei,1); document.getElementById("sc").innerText = score; }',
+          '  });',
+          '  requestAnimationFrame(loop);',
+          '}',
+          'loop();',
+          closeScript,
+          '</body></html>'
+        ].join('\n');
+      }
+
+      return [
+        '<!DOCTYPE html>',
+        '<html lang="vi">',
+        '<head>',
+        '  <meta charset="UTF-8" />',
+        '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+        '  <title>' + cleanReq.slice(0, 45) + '</title>',
+        '  <script src="https://cdn.tailwindcss.com">' + closeScript,
+        '</head>',
+        '<body class="bg-[#FCFBF9] text-zinc-900 min-h-screen p-6 font-sans">',
+        '  <div class="max-w-2xl mx-auto bg-white border border-red-200 rounded-3xl p-6 shadow-xl space-y-4">',
+        '    <div class="flex items-center justify-between border-b border-red-100 pb-4">',
+        '      <div>',
+        '        <span class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">Live Artifact</span>',
+        '        <h1 class="text-xl font-bold mt-2">' + cleanReq.slice(0, 60) + '</h1>',
+        '      </div>',
+        '      <button onclick="addItem()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-sm transition">+ Thêm mục mới</button>',
+        '    </div>',
+        '    <div id="list" class="space-y-2.5">',
+        '      <div class="p-3.5 rounded-2xl bg-[#FCFBF9] border border-red-100 flex items-center justify-between">',
+        '        <span class="text-sm font-medium">✓ Giao diện tương tác trực tiếp cho: ' + cleanReq.slice(0, 50) + '</span>',
+        '        <span class="text-xs text-emerald-600 font-bold">Ready</span>',
+        '      </div>',
+        '    </div>',
+        '  </div>',
+        '  <script>',
+        '    function addItem() {',
+        '      const list = document.getElementById("list");',
+        '      const item = document.createElement("div");',
+        '      item.className = "p-3.5 rounded-2xl bg-red-50/60 border border-red-200 flex items-center justify-between text-sm font-medium text-red-700";',
+        '      item.innerHTML = "<span>★ Mục tương tác #" + (list.children.length + 1) + "</span><span class=\'text-xs\'>Active</span>";',
+        '      list.prepend(item);',
+        '    }',
+        '  ' + closeScript,
+        '</body>',
+        '</html>'
+      ].join('\n');
+    }
+
+    function detectVisualCategoryAndKeyword(visionText, fallbackFileName = '', userPrompt = '') {
+      let keyword = '';
+      if (visionText) {
+        const matchKey =
+          visionText.match(/(?:TỪ KHÓA TÌM KIẾM|TÊN PHỤ KIỆN|TÊN SẢN PHẨM|TÊN XE|DÒNG XE|MẪU XE|VẬT THỂ|KEYWORD)\s*[:-]\s*([^\n\r*#]+)/i) ||
+          visionText.match(/\*\*([^*]{3,65})\*\*/);
+        if (matchKey && matchKey[1]) {
+          const cleaned = matchKey[1].replace(/[`"[\]()]/g, '').trim();
+          if (cleaned.length >= 2 && cleaned.length <= 75) keyword = cleaned;
+        }
+      }
+      if (!keyword) {
+        const cleanName = (fallbackFileName || '').replace(/\.[a-zA-Z0-9]+$/, '').replace(/[_-]+/g, ' ').trim();
+        keyword = cleanName.length >= 2 ? cleanName : (userPrompt || 'Sản phẩm trong ảnh').slice(0, 45);
+      }
+      return { keyword, category: 'accessory' };
+    }
+
+    async function fetchRelatedImagesAndVideosByKeyword(keyword) {
+      const q = (keyword || '').trim();
+      if (!q) return null;
+      const encoded = encodeURIComponent(q);
+      return {
+        keyword: q,
+        category: 'accessory',
+        youtubeLinks: [
+          {
+            title: "Video Review & Đánh giá thực tế: " + q,
+            url: "https://www.youtube.com/results?search_query=" + encodeURIComponent(q + " review đánh giá")
+          },
+          {
+            title: "Hướng dẫn sử dụng & Chi tiết: " + q,
+            url: "https://www.youtube.com/results?search_query=" + encoded
+          }
+        ],
+        ecommerceLinks: [
+          { platform: "Shopee VN", badge: "Tìm sản phẩm", color: "#EE4D2D", url: "https://shopee.vn/search?keyword=" + encoded },
+          { platform: "Lazada VN", badge: "Tìm sản phẩm", color: "#0F146D", url: "https://www.lazada.vn/catalog/?q=" + encoded },
+          { platform: "Google Images", badge: "Hình ảnh tương tự", color: "#2563EB", url: "https://www.google.com/search?tbm=isch&q=" + encoded }
+        ]
+      };
+    }
+
+    function ThinkingBlockView({ thinkingText, isLight, thinkingPresetLabel }) {
+      const [open, setOpen] = useState(false);
+      if (!thinkingText || !thinkingText.trim()) return null;
+      return (
+        <div className={"mb-3 rounded-2xl border overflow-hidden " + (isLight ? "bg-amber-50/70 border-amber-200/90 text-amber-950" : "bg-[#221A17] border-amber-900/40 text-amber-200")}>
+          <button
+            onClick={() => setOpen(!open)}
+            className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-semibold hover:opacity-90 transition"
+          >
+            <div className="flex items-center gap-2">
+              <BrainCircuit className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <span>Quá trình suy luận & xử lý ảnh ({thinkingPresetLabel || 'Thinking'})</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] opacity-75">
+              <span>{open ? 'Thu gọn' : 'Xem chi tiết'}</span>
+              {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+            </div>
+          </button>
+          {open && (
+            <div className={"px-3.5 py-2.5 border-t text-xs font-mono whitespace-pre-wrap leading-relaxed " + (isLight ? "border-amber-200/60 bg-white/80 text-zinc-700" : "border-amber-900/30 bg-black/20 text-neutral-300")}>
+              {thinkingText}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function VisualSearchHubCard({ visualData, isLight, onCopyLink }) {
+      if (!visualData || !visualData.keyword) return null;
+      return (
+        <div className={"mt-4 rounded-2xl border p-4 space-y-3 shadow-sm " + (isLight ? "bg-[#FCFBF9] border-red-200 text-zinc-900" : "bg-[#181313] border-red-900/50 text-zinc-100")}>
+          <div className="flex items-center justify-between border-b border-red-200/60 pb-2 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full bg-red-600 text-white text-[11px] font-bold">
+                🔍 Tra cứu nhanh theo ảnh
+              </span>
+              <span className="text-xs sm:text-sm font-bold">
+                Từ khóa: <span className="text-red-600 underline">{visualData.keyword}</span>
+              </span>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {visualData.youtubeLinks?.map((yt, idx) => (
+              <a
+                key={idx}
+                href={yt.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={"p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-semibold hover:border-red-500 transition " + (isLight ? "bg-white border-red-100" : "bg-[#221A1A] border-red-950")}
+              >
+                <span className="truncate">▶ {yt.title}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              </a>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {visualData.ecommerceLinks?.map((ec, idx) => (
+              <div
+                key={idx}
+                className={"p-2 rounded-xl border flex items-center justify-between gap-1 " + (isLight ? "bg-white border-red-100" : "bg-[#221A1A] border-red-950")}
+              >
+                <a href={ec.url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold hover:text-red-600 truncate">
+                  {ec.platform} ↗
+                </a>
+                <button onClick={() => onCopyLink(ec.url)} className="p-1 text-zinc-400 hover:text-red-600">
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [themeMode, setThemeMode] = useState('red-white');
+      const isLight = themeMode === 'red-white';
+
+      const [sidebarOpen, setSidebarOpen] = useState(true);
+      const [pinnedExpanded, setPinnedExpanded] = useState(true);
+
+      const [chats, setChats] = useState(() => {
+        try {
+          const saved = localStorage.getItem('gehihi_vision_chats_v6');
+          return saved ? JSON.parse(saved) : INITIAL_CHATS;
+        } catch {
+          return INITIAL_CHATS;
+        }
+      });
+
+      const [activeChatId, setActiveChatId] = useState('chat-welcome');
+      const [promptText, setPromptText] = useState('');
+      const [forcedOutputMode, setForcedOutputMode] = useState('auto');
+
+      const [selectedModelId, setSelectedModelId] = useState('gemini-3-flash-preview');
+      const [showModelDropdown, setShowModelDropdown] = useState(false);
+      const [modelSeriesFilter, setModelSeriesFilter] = useState('all');
+      const [customClaudeModelInput, setCustomClaudeModelInput] = useState('');
+      const [fetchedClaudeModels, setFetchedClaudeModels] = useState([]);
+      const [fetchedOpenAIModels, setFetchedOpenAIModels] = useState([]);
+      const [isFetchingOpenAIModels, setIsFetchingOpenAIModels] = useState(false);
+      const [thinkingModeId, setThinkingModeId] = useState('adaptive');
+      const [customThinkingBudget, setCustomThinkingBudget] = useState(6144);
+      const [showThinkingModal, setShowThinkingModal] = useState(false);
+
+      const [attachments, setAttachments] = useState([]);
+      const [isStreaming, setIsStreaming] = useState(false);
+      const abortControllerRef = useRef(null);
+
+      const [showDebugModal, setShowDebugModal] = useState(false);
+      const [lastVisionPayloadDebug, setLastVisionPayloadDebug] = useState(() => ({
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent',
+        model: 'gemini-3-flash-preview',
+        usedBuiltInRuntimeKey: true,
+        imageCount: 0,
+        imagesMeta: [],
+        payloadPreview: {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { text: 'Hãy đọc và phân tích chi tiết hình ảnh này.' },
+                {
+                  inlineData: {
+                    mimeType: 'image/png',
+                    data: '<CHUỖI_BASE64_THUẦN_ĐÃ_CẮT_TIỀN_TỐ_DATA_URL>'
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }));
+
+      const [apiConfig, setApiConfig] = useState(() => {
+        const defaultObj = {
+          anthropicKey: DEFAULT_USER_CLAUDE_KEY,
+          anthropicBackupKeys: [],
+          claudeBaseUrl: 'https://api.anthropic.com',
+          geminiKey: '',
+          geminiBackupKeys: [],
+          openaiKey: '',
+          openaiBackupKeys: [],
+          openaiBaseUrl: 'https://api.openai.com/v1',
+          autoSwapSameProvider: true,
+          autoSwapCrossProvider: true,
+          deadKeysMap: {},
+          temperature: 0.7,
+          maxTokens: 4096,
+          enableBlender5MasterPrompt: true,
+          blender5MasterPrompt: DEFAULT_BLENDER_5_MASTER_PROMPT,
+          systemPrompt:
+            'Bạn là trợ lý AI đa phương thức thông minh trong không gian làm việc "Gehihi Tớ Chọn Cậu". Khi người dùng gửi hình ảnh lên, hãy quan sát thật kỹ từng chi tiết, đọc chính xác mọi văn bản/chữ viết/số liệu/biểu đồ hoặc vật thể trong ảnh và phân tích rõ ràng, chi tiết bằng tiếng Việt.'
+        };
+        try {
+          const saved = localStorage.getItem('gehihi_apiconfig_vision_v6');
+          if (!saved) return defaultObj;
+          const parsed = JSON.parse(saved);
+          return {
+            ...defaultObj,
+            ...parsed,
+            blender5MasterPrompt: parsed.blender5MasterPrompt || DEFAULT_BLENDER_5_MASTER_PROMPT,
+            enableBlender5MasterPrompt: parsed.enableBlender5MasterPrompt !== false,
+            anthropicBackupKeys: Array.isArray(parsed.anthropicBackupKeys) ? parsed.anthropicBackupKeys : [],
+            geminiBackupKeys: Array.isArray(parsed.geminiBackupKeys) ? parsed.geminiBackupKeys : [],
+            openaiBackupKeys: Array.isArray(parsed.openaiBackupKeys) ? parsed.openaiBackupKeys : [],
+            deadKeysMap: parsed.deadKeysMap || {}
+          };
+        } catch {
+          return defaultObj;
+        }
+      });
+
+      const [newBackupKeyInput, setNewBackupKeyInput] = useState({
+        anthropic: '',
+        gemini: '',
+        openai: ''
+      });
+
+      const [tokenWallet, setTokenWallet] = useState(() => {
+        const defaultQuota = {
+          purchasedTokens: 1000000,
+          usedInputTokens: 0,
+          usedOutputTokens: 0,
+          lastCallTokens: 0,
+          totalRequestsLimit: 1500,
+          usedRequestsCount: 0,
+          providerRequestsUsed: { gemini: 0, anthropic: 0, openai: 0 }
+        };
+        try {
+          const saved = localStorage.getItem('gehihi_token_wallet_v4');
+          return saved ? { ...defaultQuota, ...JSON.parse(saved) } : defaultQuota;
+        } catch {
+          return defaultQuota;
+        }
+      });
+
+      const [showPasswordModal, setShowPasswordModal] = useState(false);
+      const [passwordInput, setPasswordInput] = useState('');
+      const [passwordError, setPasswordError] = useState('');
+      const [showPasswordChars, setShowPasswordChars] = useState(false);
+      const [pendingProtectedTarget, setPendingProtectedTarget] = useState('api');
+
+      const [showApiModal, setShowApiModal] = useState(false);
+      const [showTokenTopupModal, setShowTokenTopupModal] = useState(false);
+      const [topupTokenInput, setTopupTokenInput] = useState('1000000');
+      const [topupRequestsInput, setTopupRequestsInput] = useState('1500');
+
+      const [toastMessage, setToastMessage] = useState(null);
+      const fileInputRef = useRef(null);
+      const messagesEndRef = useRef(null);
+      const textareaRef = useRef(null);
+      const [copiedId, setCopiedId] = useState(null);
+
+      const [artifactPanel, setArtifactPanel] = useState({
+        isOpen: false,
+        title: 'Interactive Preview',
+        code: '',
+        language: 'html',
+        activeTab: 'preview',
+        isFullscreen: false,
+        refreshKey: 0
+      });
+
+      const [isRecording, setIsRecording] = useState(false);
+      const recognitionRef = useRef(null);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('gehihi_vision_chats_v6', JSON.stringify(chats));
+        } catch {}
+      }, [chats]);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('gehihi_apiconfig_vision_v6', JSON.stringify(apiConfig));
+        } catch {}
+      }, [apiConfig]);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('gehihi_token_wallet_v4', JSON.stringify(tokenWallet));
+        } catch {}
+      }, [tokenWallet]);
+
+      const showToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3500);
+      };
+
+      const openProtectedAdminArea = (target = 'api') => {
+        setPendingProtectedTarget(target);
+        setPasswordInput('');
+        setPasswordError('');
+        setShowPasswordModal(true);
+      };
+
+      const handleVerifyAdminPassword = (e) => {
+        if (e) e.preventDefault();
+        if (passwordInput.trim() === ADMIN_PASSCODE) {
+          setShowPasswordModal(false);
+          setPasswordInput('');
+          setPasswordError('');
+          if (pendingProtectedTarget === 'token') {
+            setTopupTokenInput(String(tokenWallet.purchasedTokens));
+            setTopupRequestsInput(String(tokenWallet.totalRequestsLimit || 1500));
+            setShowTokenTopupModal(true);
+          } else {
+            setShowApiModal(true);
+          }
+          showToast('🔓 Đã mở khóa cấu hình API & System Prompt!');
+        } else {
+          setPasswordError('Mật khẩu không đúng! Vui lòng nhập đúng mật khẩu bảo mật.');
+        }
+      };
+
+      const allAvailableModels = useMemo(() => {
+        const existingApiIds = new Set(AI_MODELS.map((m) => m.apiModel));
+        const dynamicClaude = fetchedClaudeModels
+          .filter((m) => !existingApiIds.has(m.id))
+          .map((m) => ({
+            id: `claude-live-${m.id}`,
+            label: m.display_name || m.id,
+            badge: 'Claude Live',
+            series: 'claude-4',
+            provider: 'anthropic',
+            apiModel: m.id,
+            supportsThinking: true,
+            recommendedThink: 'medium',
+            description: `Model Claude tải trực tiếp từ API (${m.id})`,
+            color: '#DC2626'
+          }));
+        const dynamicOpenAI = fetchedOpenAIModels
+          .filter((m) => !existingApiIds.has(m.id))
+          .map((m) => ({
+            id: `openai-live-${m.id}`,
+            label: m.display_name || m.id,
+            badge: 'GPT Live',
+            series: 'gpt',
+            provider: 'openai',
+            apiModel: m.id,
+            supportsThinking: /^o\d|gpt-5/i.test(m.id),
+            recommendedThink: /^o\d|gpt-5/i.test(m.id) ? 'medium' : 'off',
+            description: `Model OpenAI GPT tải trực tiếp từ API (${m.id})`,
+            color: '#10B981'
+          }));
+        return [...AI_MODELS, ...dynamicClaude, ...dynamicOpenAI];
+      }, [fetchedClaudeModels, fetchedOpenAIModels]);
+
+      const selectedModel = useMemo(
+        () => allAvailableModels.find((m) => m.id === selectedModelId) || allAvailableModels[0],
+        [allAvailableModels, selectedModelId]
+      );
+
+      const activeThinkingPreset = useMemo(() => {
+        const found = THINKING_PRESETS.find((t) => t.id === thinkingModeId) || THINKING_PRESETS[1];
+        if (found.id === 'custom') {
+          return {
+            ...found,
+            budget: customThinkingBudget,
+            shortLabel: `Think: ${Math.round(customThinkingBudget / 1024)}K`
+          };
+        }
+        return found;
+      }, [thinkingModeId, customThinkingBudget]);
+
+      const liveIntentPreview = useMemo(
+        () => detectUserPromptIntent(promptText, forcedOutputMode, attachments.some((a) => a.type === 'image')),
+        [promptText, forcedOutputMode, attachments]
+      );
+
+      const activeChat = useMemo(
+        () => chats.find((c) => c.id === activeChatId) || null,
+        [chats, activeChatId]
+      );
+
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [activeChat?.messages?.length, isStreaming]);
+
+      const recordRealTokenUsage = ({ inputTokens = 0, outputTokens = 0, provider = selectedModel.provider }) => {
+        const inTok = Math.max(0, Number(inputTokens) || 0);
+        const outTok = Math.max(0, Number(outputTokens) || 0);
+        if (inTok === 0 && outTok === 0) return;
+        setTokenWallet((prev) => ({
+          ...prev,
+          usedInputTokens: prev.usedInputTokens + inTok,
+          usedOutputTokens: prev.usedOutputTokens + outTok,
+          lastCallTokens: inTok + outTok,
+          usedRequestsCount: (prev.usedRequestsCount || 0) + 1,
+          providerRequestsUsed: {
+            ...(prev.providerRequestsUsed || {}),
+            [provider]: ((prev.providerRequestsUsed || {})[provider] || 0) + 1
+          }
+        }));
+      };
+
+      const getProviderKeyList = (provider, cfg = apiConfig) => {
+        const splitKeys = (str) =>
+          String(str || '')
+            .split(/[\n,;]+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        let primary = [];
+        let backups = [];
+        if (provider === 'anthropic') {
+          primary = splitKeys(cfg.anthropicKey);
+          backups = (cfg.anthropicBackupKeys || []).flatMap(splitKeys);
+        } else if (provider === 'gemini') {
+          primary = splitKeys(cfg.geminiKey);
+          backups = (cfg.geminiBackupKeys || []).flatMap(splitKeys);
+        } else if (provider === 'openai') {
+          primary = splitKeys(cfg.openaiKey);
+          backups = (cfg.openaiBackupKeys || []).flatMap(splitKeys);
+        }
+        return Array.from(new Set([...primary, ...backups]));
+      };
+
+      const maskApiKey = (k) => {
+        if (!k || k.length < 10) return k || 'Tích hợp sẵn (Canvas)';
+        return `${k.slice(0, 8)}...${k.slice(-4)}`;
+      };
+
+      const addBackupKeyForProvider = (provider) => {
+        const raw = (newBackupKeyInput[provider] || '').trim();
+        if (!raw) return;
+        const newKeys = raw.split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+        if (!newKeys.length) return;
+
+        setApiConfig((prev) => {
+          const primaryField = provider === 'anthropic' ? 'anthropicKey' : provider === 'gemini' ? 'geminiKey' : 'openaiKey';
+          const backupField = provider === 'anthropic' ? 'anthropicBackupKeys' : provider === 'gemini' ? 'geminiBackupKeys' : 'openaiBackupKeys';
+          const currentPrimary = (prev[primaryField] || '').trim();
+          if (!currentPrimary) {
+            const [first, ...rest] = newKeys;
+            return {
+              ...prev,
+              [primaryField]: first,
+              [backupField]: Array.from(new Set([...(prev[backupField] || []), ...rest]))
+            };
+          }
+          return {
+            ...prev,
+            [backupField]: Array.from(new Set([...(prev[backupField] || []), ...newKeys]))
+          };
+        });
+        setNewBackupKeyInput((prev) => ({ ...prev, [provider]: '' }));
+        showToast(`Đã thêm ${newKeys.length} Key cho ${provider.toUpperCase()}!`);
+      };
+
+      const manualRotateKey = (provider) => {
+        const allKeys = getProviderKeyList(provider);
+        if (allKeys.length < 2) {
+          showToast(`Cần ít nhất 2 Key ở mục ${provider.toUpperCase()} để đảo Key!`);
+          return;
+        }
+        const [first, second, ...rest] = allKeys;
+        const primaryField = provider === 'anthropic' ? 'anthropicKey' : provider === 'gemini' ? 'geminiKey' : 'openaiKey';
+        const backupField = provider === 'anthropic' ? 'anthropicBackupKeys' : provider === 'gemini' ? 'geminiBackupKeys' : 'openaiBackupKeys';
+        setApiConfig((prev) => ({
+          ...prev,
+          [primaryField]: second,
+          [backupField]: [...rest, first]
+        }));
+        showToast(`🔄 Đã đảo sang Key: ${maskApiKey(second)}`);
+      };
+
+      const removeKeyFromProviderPool = (provider, targetKey) => {
+        setApiConfig((prev) => {
+          const allKeys = getProviderKeyList(provider, prev).filter((k) => k !== targetKey);
+          const primaryField = provider === 'anthropic' ? 'anthropicKey' : provider === 'gemini' ? 'geminiKey' : 'openaiKey';
+          const backupField = provider === 'anthropic' ? 'anthropicBackupKeys' : provider === 'gemini' ? 'geminiBackupKeys' : 'openaiBackupKeys';
+          const [newPrimary = '', ...restBackups] = allKeys;
+          const nextDead = { ...(prev.deadKeysMap || {}) };
+          delete nextDead[targetKey];
+          return {
+            ...prev,
+            [primaryField]: newPrimary,
+            [backupField]: restBackups,
+            deadKeysMap: nextDead
+          };
+        });
+        showToast(`Đã xóa Key ${maskApiKey(targetKey)} khỏi danh sách`);
+      };
+
+      const promoteSpecificKeyToPrimary = (provider, targetKey) => {
+        setApiConfig((prev) => {
+          const allKeys = getProviderKeyList(provider, prev);
+          const remaining = allKeys.filter((k) => k !== targetKey);
+          const primaryField = provider === 'anthropic' ? 'anthropicKey' : provider === 'gemini' ? 'geminiKey' : 'openaiKey';
+          const backupField = provider === 'anthropic' ? 'anthropicBackupKeys' : provider === 'gemini' ? 'geminiBackupKeys' : 'openaiBackupKeys';
+          const nextDead = { ...(prev.deadKeysMap || {}) };
+          delete nextDead[targetKey];
+          return {
+            ...prev,
+            [primaryField]: targetKey,
+            [backupField]: remaining,
+            deadKeysMap: nextDead
+          };
+        });
+        showToast(`⚡ Đã chọn Key ${maskApiKey(targetKey)} làm Key chính!`);
+      };
+
+      const markKeyDeadAndPromoteBackup = (provider, failedKey, reason = 'Hết hạn / Lỗi kết nối') => {
+        if (!failedKey) return;
+        setApiConfig((prev) => {
+          const allKeys = getProviderKeyList(provider, prev);
+          const nextDeadMap = { ...(prev.deadKeysMap || {}), [failedKey]: reason };
+          const aliveKeys = allKeys.filter((k) => k !== failedKey && !nextDeadMap[k]);
+          const primaryField = provider === 'anthropic' ? 'anthropicKey' : provider === 'gemini' ? 'geminiKey' : 'openaiKey';
+          const backupField = provider === 'anthropic' ? 'anthropicBackupKeys' : provider === 'gemini' ? 'geminiBackupKeys' : 'openaiBackupKeys';
+
+          if (aliveKeys.length > 0) {
+            const [newPrimary, ...remaining] = aliveKeys;
+            const deadOnes = allKeys.filter((k) => k !== newPrimary && !remaining.includes(k));
+            return {
+              ...prev,
+              [primaryField]: newPrimary,
+              [backupField]: [...remaining, ...deadOnes],
+              deadKeysMap: nextDeadMap
+            };
+          }
+          return { ...prev, deadKeysMap: nextDeadMap };
+        });
+      };
+
+      const copyTextSafe = (text, label = 'Nội dung') => {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast(`Đã sao chép ${label}!`);
+        } catch {
+          navigator.clipboard?.writeText(text);
+          showToast(`Đã sao chép ${label}!`);
+        }
+      };
+
+      const downloadCodeAsFile = (code, lang = 'html', customTitle = 'gehihi_script') => {
+        const ext = getFileExtensionForLang(lang);
+        const safeName = customTitle.toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'gehihi_output';
+        const filename = `${safeName}.${ext}`;
+        const mime = ext === 'html' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8';
+        const blob = new Blob([code], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã tải xuống file: ${filename}`);
+      };
+
+      const buildDynamicSystemPrompt = (intentInfo) => {
+        const fence = "`" + "`" + "`";
+        const base =
+          (apiConfig.systemPrompt || '').trim() +
+          "\n\n[QUY TẮC NHÂN DẠNG]:\n" +
+          "- Trả lời thẳng vào yêu cầu của người dùng một cách tự nhiên, rõ ràng, chi tiết.";
+
+        const blenderMasterRules =
+          apiConfig.enableBlender5MasterPrompt !== false
+            ? "\n\n" + (apiConfig.blender5MasterPrompt || DEFAULT_BLENDER_5_MASTER_PROMPT).trim()
+            : "";
+
+        if (intentInfo.mode === 'vision-analysis') {
+          return (
+            base +
+            "\n\n[QUY TẮC ĐỌC & PHÂN TÍCH HÌNH ẢNH (GEMINI VISION)]:\n" +
+            "- Người dùng đã gửi kèm 1 hoặc nhiều hình ảnh.\n" +
+            "- Hãy quan sát kỹ toàn bộ bức ảnh và thực hiện đầy đủ yêu cầu của người dùng.\n" +
+            "- Nếu ảnh có chứa văn bản, hóa đơn, tài liệu, code hoặc đề bài: hãy đọc (OCR) chính xác từng chữ/con số và giải quyết hoặc phân tích chi tiết.\n" +
+            "- Nếu ảnh là biểu đồ, giao diện UI, sơ đồ hoặc vật thể thực tế: hãy mô tả bố cục, màu sắc, số liệu và nhận xét chuyên sâu." +
+            blenderMasterRules
+          );
+        }
+        if (intentInfo.mode === 'visual-search') {
+          return (
+            base +
+            "\n\n[QUY TẮC TÌM KIẾM HÌNH ẢNH & PHỤ KIỆN XE]:\n" +
+            "- Hãy quan sát kỹ bức ảnh người dùng tải lên, xác định tên chính xác của phụ kiện / mẫu xe / sản phẩm trong ảnh.\n" +
+            "- Mở đầu bằng 2 dòng:\n" +
+            "  PHÂN LOẠI: <PHỤ KIỆN XE | XE NGUYÊN CHIẾC | SẢN PHẨM KHÁC>\n" +
+            "  TỪ KHÓA TÌM KIẾM: <Tên chính xác nhất của vật thể trong ảnh>\n" +
+            "- Sau đó phân tích đặc điểm nhận diện và thông tin chi tiết của sản phẩm trong ảnh."
+          );
+        }
+        if (intentInfo.mode === 'addon-tool') {
+          return (
+            base +
+            blenderMasterRules +
+            "\n\n[YÊU CẦU ĐẦU RA BẮT BUỘC CHO BLENDER 5.0]:\n" +
+            "- Xuất ra file mã nguồn Python hoàn chỉnh chạy trên Blender 5.0 trong khối " + fence + "python ... " + fence + " (có bl_info với \"blender\": (5, 0, 0), import bpy, PropertyGroup, Operator, Panel trên N-Panel, CLASSES, register(), unregister())."
+          );
+        }
+        if (intentInfo.mode === 'html-code') {
+          return (
+            base +
+            "\n\n[QUY TẮC CODE WEB / GAME HTML5]:\n" +
+            "- Xuất ra 1 file HTML hoàn chỉnh duy nhất trong khối " + fence + "html ... " + fence + " để chạy thử trực tiếp."
+          );
+        }
+        return base + blenderMasterRules;
+      };
+
+      const extractCleanGeminiInlineData = (att) => {
+        if (!att || att.type !== 'image') return null;
+        let pureBase64 = (att.base64Data || '').trim();
+        let mimeType = (att.mimeType || 'image/jpeg').trim();
+
+        if (pureBase64.includes(',')) {
+          const [header, b64] = pureBase64.split(',');
+          pureBase64 = (b64 || '').trim();
+          const mimeMatch = header.match(/data:([^;]+);base64/i);
+          if (mimeMatch && mimeMatch[1]) mimeType = mimeMatch[1];
+        } else if (!pureBase64 && att.dataUrl && att.dataUrl.includes(',')) {
+          const [header, b64] = att.dataUrl.split(',');
+          pureBase64 = (b64 || '').trim();
+          const mimeMatch = header.match(/data:([^;]+);base64/i);
+          if (mimeMatch && mimeMatch[1]) mimeType = mimeMatch[1];
+        }
+
+        if (!pureBase64) return null;
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(mimeType)) {
+          mimeType = 'image/jpeg';
+        }
+        return { mimeType, data: pureBase64 };
+      };
+
+      const buildGeminiMultimodalContents = (historyMessages, currentText, currentAttachments) => {
+        const contents = [];
+        const recentHistory = (historyMessages || []).filter((m) => !m.isStreaming).slice(-6);
+        for (const msg of recentHistory) {
+          const role = msg.role === 'assistant' ? 'model' : 'user';
+          const parts = [];
+
+          if (Array.isArray(msg.attachments)) {
+            for (const att of msg.attachments) {
+              const inlineObj = extractCleanGeminiInlineData(att);
+              if (inlineObj) {
+                parts.push({ inlineData: inlineObj });
+              } else if (att.textContent) {
+                parts.push({ text: `\n--- Tệp (${att.name}) ---\n${att.textContent}\n` });
+              }
+            }
+          }
+
+          const cleanText = String(msg.content || '').trim();
+          if (cleanText) {
+            parts.push({ text: cleanText });
+          }
+
+          if (parts.length > 0) {
+            if (contents.length > 0 && contents[contents.length - 1].role === role) {
+              contents[contents.length - 1].parts.push(...parts);
+            } else {
+              contents.push({ role, parts });
+            }
+          }
+        }
+
+        while (contents.length > 0 && contents[0].role !== 'user') {
+          contents.shift();
+        }
+
+        const currentParts = [];
+        const promptToSend =
+          currentText && currentText.trim() !== ''
+            ? currentText.trim()
+            : 'Hãy đọc và phân tích chi tiết hình ảnh này.';
+
+        currentParts.push({ text: promptToSend });
+
+        const debugImagesMeta = [];
+        for (const att of currentAttachments || []) {
+          if (att.type === 'image') {
+            const inlineObj = extractCleanGeminiInlineData(att);
+            if (inlineObj) {
+              currentParts.push({
+                inlineData: {
+                  mimeType: inlineObj.mimeType,
+                  data: inlineObj.data
+                }
+              });
+              debugImagesMeta.push({
+                name: att.name,
+                mimeType: inlineObj.mimeType,
+                dimensions: att.width && att.height ? `${att.width}x${att.height}px` : 'Auto',
+                base64Length: inlineObj.data.length,
+                base64Preview: `${inlineObj.data.slice(0, 36)}...${inlineObj.data.slice(-20)}`
+              });
+            }
+          } else if (att.textContent) {
+            currentParts.push({
+              text: `\n--- Nội dung tệp đính kèm (${att.name}) ---\n${att.textContent}\n`
+            });
+          }
+        }
+
+        if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+          contents[contents.length - 1].parts.push(...currentParts);
+        } else {
+          contents.push({ role: 'user', parts: currentParts });
+        }
+
+        return { contents, debugImagesMeta };
+      };
+
+      const callGeminiWithVisionSupport = async ({
+        apiKey = '',
+        model = 'gemini-3-flash-preview',
+        historyMessages,
+        currentText,
+        currentAttachments,
+        intentInfo,
+        onDelta,
+        onThinkingDelta,
+        signal
+      }) => {
+        const cleanKey = (apiKey || '').trim();
+        const sysPrompt = buildDynamicSystemPrompt(intentInfo);
+        const { contents, debugImagesMeta } = buildGeminiMultimodalContents(
+          historyMessages,
+          currentText,
+          currentAttachments
+        );
+
+        const sanitizedContentsForDebug = contents.map((turn) => ({
+          role: turn.role,
+          parts: turn.parts.map((p) =>
+            p.inlineData
+              ? {
+                  inlineData: {
+                    mimeType: p.inlineData.mimeType,
+                    data: `${p.inlineData.data.slice(0, 48)}... [Chuỗi Base64 thuần dài ${p.inlineData.data.length.toLocaleString()} ký tự]`
+                  }
+                }
+              : p
+          )
+        }));
+
+        const candidateModels = cleanKey
+          ? Array.from(new Set([model, 'gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-2.0-flash']))
+          : ['gemini-3-flash-preview'];
+
+        setLastVisionPayloadDebug({
+          endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${candidateModels[0]}:generateContent`,
+          model: candidateModels[0],
+          usedBuiltInRuntimeKey: !cleanKey,
+          imageCount: debugImagesMeta.length,
+          imagesMeta: debugImagesMeta,
+          payloadPreview: {
+            contents: sanitizedContentsForDebug,
+            systemInstruction: { parts: [{ text: sysPrompt }] }
+          }
+        });
+
+        if (debugImagesMeta.length > 0 && onThinkingDelta) {
+          onThinkingDelta(
+            `Đã đóng gói ${debugImagesMeta.length} hình ảnh sang chuẩn Gemini inlineData (${debugImagesMeta
+              .map((m) => `${m.name} · ${m.mimeType}`)
+              .join(', ')}).\nĐang gửi tới Gemini Vision API...`
+          );
+        }
+
+        const payload = {
+          contents,
+          systemInstruction: {
+            parts: [{ text: sysPrompt }]
+          }
+        };
+
+        let lastError = null;
+
+        for (const targetModel of candidateModels) {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${cleanKey}`;
+          try {
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              const parts = result?.candidates?.[0]?.content?.parts || [];
+              const fullText = parts.map((p) => p.text || '').join('');
+              if (fullText.trim()) {
+                onDelta(fullText);
+                recordRealTokenUsage({
+                  inputTokens: result?.usageMetadata?.promptTokenCount || 220,
+                  outputTokens: result?.usageMetadata?.candidatesTokenCount || Math.ceil(fullText.length / 4)
+                });
+                return;
+              }
+            } else {
+              const errJson = await response.json().catch(() => ({}));
+              const errMsg = errJson?.error?.message || `Gemini HTTP ${response.status}`;
+              lastError = new Error(errMsg);
+              if (response.status === 400 || response.status === 403) {
+                break;
+              }
+            }
+          } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            lastError = err;
+          }
+        }
+
+        try {
+          const imageAtts = (currentAttachments || []).filter((a) => a.type === 'image' && a.dataUrl);
+          let userMsgContent = currentText;
+          if (imageAtts.length > 0) {
+            userMsgContent = [
+              {
+                type: 'text',
+                text: (currentText || 'Hãy phân tích hình ảnh này.') + '\n[Ghi chú: Đã đính kèm hình ảnh để phân tích chi tiết]'
+              },
+              ...imageAtts.map((img) => ({ type: 'image_url', image_url: { url: img.dataUrl } }))
+            ];
+          }
+
+          const proxyRes = await fetch('https://text.pollinations.ai/openai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'openai',
+              messages: [
+                { role: 'system', content: sysPrompt },
+                { role: 'user', content: userMsgContent }
+              ],
+              temperature: Number(apiConfig.temperature) || 0.7
+            }),
+            signal
+          });
+
+          if (proxyRes.ok) {
+            const proxyData = await proxyRes.json();
+            const proxyText = proxyData?.choices?.[0]?.message?.content || '';
+            if (proxyText && proxyText.trim().length > 3) {
+              onDelta(proxyText);
+              recordRealTokenUsage({ inputTokens: 180, outputTokens: Math.ceil(proxyText.length / 4) });
+              return;
+            }
+          }
+        } catch (proxyErr) {
+          if (proxyErr.name === 'AbortError') throw proxyErr;
+        }
+
+        throw lastError || new Error('API key not valid hoặc không thể kết nối tới máy chủ AI.');
+      };
+
+      const streamWithSingleOpenAIKey = async ({ apiKey, model, historyMessages, currentText, currentAttachments, intentInfo, onDelta, signal }) => {
+        const cleanKey = apiKey.trim();
+        const baseUrl = (apiConfig.openaiBaseUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
+        const endpoint = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
+        const sysPrompt = buildDynamicSystemPrompt(intentInfo);
+
+        const userParts = [{ type: 'text', text: currentText || 'Hãy đọc và phân tích chi tiết hình ảnh này.' }];
+        for (const att of currentAttachments || []) {
+          if (att.type === 'image' && att.dataUrl) {
+            userParts.push({
+              type: 'image_url',
+              image_url: { url: att.dataUrl, detail: 'high' }
+            });
+          } else if (att.textContent) {
+            userParts.push({
+              type: 'text',
+              text: `\n--- Tệp (${att.name}) ---\n${att.textContent}\n`
+            });
+          }
+        }
+
+        const apiMessages = [{ role: 'system', content: sysPrompt }];
+        for (const msg of (historyMessages || []).slice(-6)) {
+          if (!msg.content || msg.isStreaming) continue;
+          apiMessages.push({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: String(msg.content)
+          });
+        }
+        apiMessages.push({
+          role: 'user',
+          content: userParts.length === 1 ? (currentText || 'Xin chào') : userParts
+        });
+
+        const syncRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cleanKey}`
+          },
+          body: JSON.stringify({
+            model: model || 'gpt-4o',
+            messages: apiMessages,
+            max_tokens: Number(apiConfig.maxTokens) || 4096
+          }),
+          signal
+        });
+
+        if (!syncRes.ok) throw new Error(`OpenAI HTTP ${syncRes.status}`);
+        const data = await syncRes.json();
+        const replyText = data?.choices?.[0]?.message?.content || '';
+        if (!replyText.trim()) throw new Error('OpenAI phản hồi rỗng');
+        onDelta(replyText);
+        recordRealTokenUsage({
+          inputTokens: data?.usage?.prompt_tokens || 160,
+          outputTokens: data?.usage?.completion_tokens || Math.ceil(replyText.length / 4)
+        });
+      };
+
+      const streamWithSingleClaudeKey = async ({ apiKey, model, historyMessages, currentText, currentAttachments, intentInfo, onDelta, signal }) => {
+        const cleanKey = apiKey.trim();
+        const baseUrl = (apiConfig.claudeBaseUrl || 'https://api.anthropic.com').replace(/\/+$/, '');
+        const sysPrompt = buildDynamicSystemPrompt(intentInfo);
+        const messagesUrl = baseUrl.endsWith('/v1') ? `${baseUrl}/messages` : `${baseUrl}/v1/messages`;
+
+        const userBlocks = [];
+        for (const att of currentAttachments || []) {
+          const inlineObj = extractCleanGeminiInlineData(att);
+          if (inlineObj) {
+            userBlocks.push({
+              type: 'image',
+              source: { type: 'base64', media_type: inlineObj.mimeType, data: inlineObj.data }
+            });
+          }
+        }
+        userBlocks.push({
+          type: 'text',
+          text: currentText || 'Hãy đọc và phân tích chi tiết hình ảnh này.'
+        });
+
+        const res = await fetch(messagesUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': cleanKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: model || 'claude-sonnet-4-5-20250929',
+            max_tokens: Number(apiConfig.maxTokens) || 4096,
+            system: sysPrompt,
+            messages: [{ role: 'user', content: userBlocks }]
+          }),
+          signal
+        });
+
+        if (!res.ok) throw new Error(`Claude HTTP ${res.status}`);
+        const data = await res.json();
+        const text = (data?.content || []).map((c) => c.text || '').join('');
+        if (!text.trim()) throw new Error('Claude phản hồi rỗng');
+        onDelta(text);
+        recordRealTokenUsage({ inputTokens: 180, outputTokens: Math.ceil(text.length / 4) });
+      };
+
+      const executeProviderWithKeyPool = async ({
+        provider,
+        model,
+        historyMessages,
+        currentText,
+        currentAttachments,
+        intentInfo,
+        onDelta,
+        onThinkingDelta,
+        onSwapEvent,
+        signal
+      }) => {
+        const allKeys = getProviderKeyList(provider);
+        const deadMap = apiConfig.deadKeysMap || {};
+        const orderedKeys = [
+          ...allKeys.filter((k) => !deadMap[k]),
+          ...allKeys.filter((k) => deadMap[k])
+        ];
+
+        if (provider === 'gemini' && orderedKeys.length === 0) {
+          await callGeminiWithVisionSupport({
+            apiKey: '',
+            model: 'gemini-3-flash-preview',
+            historyMessages,
+            currentText,
+            currentAttachments,
+            intentInfo,
+            onDelta,
+            onThinkingDelta,
+            signal
+          });
+          return { usedProvider: 'gemini', usedKey: '', swapped: false };
+        }
+
+        if (orderedKeys.length === 0) {
+          throw new Error(`Chưa nhập API Key cho ${provider.toUpperCase()}`);
+        }
+
+        let lastErr = null;
+        const maxAttempts = apiConfig.autoSwapSameProvider ? orderedKeys.length : 1;
+
+        for (let idx = 0; idx < maxAttempts; idx++) {
+          const candidateKey = orderedKeys[idx];
+          try {
+            if (provider === 'gemini') {
+              await callGeminiWithVisionSupport({
+                apiKey: candidateKey,
+                model,
+                historyMessages,
+                currentText,
+                currentAttachments,
+                intentInfo,
+                onDelta,
+                onThinkingDelta,
+                signal
+              });
+            } else if (provider === 'anthropic') {
+              await streamWithSingleClaudeKey({
+                apiKey: candidateKey,
+                model,
+                historyMessages,
+                currentText,
+                currentAttachments,
+                intentInfo,
+                onDelta,
+                signal
+              });
+            } else if (provider === 'openai') {
+              await streamWithSingleOpenAIKey({
+                apiKey: candidateKey,
+                model,
+                historyMessages,
+                currentText,
+                currentAttachments,
+                intentInfo,
+                onDelta,
+                signal
+              });
+            }
+            return { usedProvider: provider, usedKey: candidateKey, swapped: idx > 0 };
+          } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            lastErr = err;
+            markKeyDeadAndPromoteBackup(provider, candidateKey, err.message || 'Lỗi kết nối / Hết hạn');
+            if (idx + 1 < maxAttempts) {
+              const nextKey = orderedKeys[idx + 1];
+              const notice = `🔄 Key ${maskApiKey(candidateKey)} lỗi, tự động đảo sang Key dự phòng ${maskApiKey(nextKey)}`;
+              onSwapEvent?.(notice);
+              showToast(notice);
+            }
+          }
+        }
+
+        if (provider === 'gemini') {
+          await callGeminiWithVisionSupport({
+            apiKey: '',
+            model: 'gemini-3-flash-preview',
+            historyMessages,
+            currentText,
+            currentAttachments,
+            intentInfo,
+            onDelta,
+            onThinkingDelta,
+            signal
+          });
+          return { usedProvider: 'gemini', usedKey: '', swapped: true };
+        }
+
+        throw lastErr || new Error(`${provider.toUpperCase()} không khả dụng`);
+      };
+
+      const handleSendMessage = async (overrideAttachments = null, overridePrompt = null) => {
+        const activeAtts = overrideAttachments !== null ? overrideAttachments : attachments;
+        const rawText = overridePrompt !== null ? overridePrompt : promptText;
+        const trimmedPrompt = rawText.trim();
+
+        if ((!trimmedPrompt && activeAtts.length === 0) || isStreaming) return;
+
+        const currentAttachments = [...activeAtts];
+        const hasImageAtt = currentAttachments.some((a) => a.type === 'image');
+        const intentInfo = detectUserPromptIntent(trimmedPrompt, forcedOutputMode, hasImageAtt);
+
+        const effectivePrompt =
+          hasImageAtt && !trimmedPrompt
+            ? intentInfo.mode === 'visual-search'
+              ? 'Hãy nhận diện chính xác sản phẩm / phụ kiện xe trong bức ảnh này và tìm các đường link liên quan.'
+              : 'Hãy đọc và phân tích chi tiết hình ảnh này.'
+            : trimmedPrompt;
+
+        const userMsg = {
+          id: 'user-' + Date.now(),
+          role: 'user',
+          content: effectivePrompt,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          attachments: currentAttachments,
+          intentBadge: intentInfo.label
+        };
+
+        const assistantMsgId = 'asst-' + (Date.now() + 1);
+        const placeholderAssistantMsg = {
+          id: assistantMsgId,
+          role: 'assistant',
+          provider: selectedModel.provider,
+          thinkingPresetLabel: activeThinkingPreset.label,
+          thinkingText: '',
+          content: '',
+          visualSearchData: null,
+          analyzedImageCount: currentAttachments.filter((a) => a.type === 'image').length,
+          swapNotice: null,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isStreaming: true
+        };
+
+        let targetChatId = activeChatId;
+        let historyForApi = [];
+
+        if (!targetChatId) {
+          targetChatId = 'chat-' + Date.now();
+          const newChat = {
+            id: targetChatId,
+            title: (effectivePrompt || currentAttachments[0]?.name || 'Phân tích hình ảnh').slice(0, 42),
+            pinned: false,
+            updatedAt: new Date().toISOString(),
+            modelId: selectedModel.id,
+            messages: [userMsg, placeholderAssistantMsg]
+          };
+          setChats((prev) => [newChat, ...prev]);
+          setActiveChatId(targetChatId);
+        } else {
+          const existing = chats.find((c) => c.id === targetChatId);
+          historyForApi = existing ? existing.messages : [];
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === targetChatId
+                ? { ...c, updatedAt: new Date().toISOString(), messages: [...c.messages, userMsg, placeholderAssistantMsg] }
+                : c
+            )
+          );
+        }
+
+        if (overridePrompt === null) setPromptText('');
+        if (overrideAttachments === null) setAttachments([]);
+        setIsStreaming(true);
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        let accumulatedContent = '';
+        let accumulatedThinking = '';
+
+        const appendDelta = (deltaText) => {
+          accumulatedContent += deltaText;
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === targetChatId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMsgId ? { ...m, content: accumulatedContent } : m
+                    )
+                  }
+                : c
+            )
+          );
+        };
+
+        const appendThinkingDelta = (thinkDelta) => {
+          accumulatedThinking += thinkDelta;
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === targetChatId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMsgId ? { ...m, thinkingText: accumulatedThinking } : m
+                    )
+                  }
+                : c
+            )
+          );
+        };
+
+        const setAssistantSwapNotice = (noticeStr) => {
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === targetChatId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMsgId ? { ...m, swapNotice: noticeStr } : m
+                    )
+                  }
+                : c
+            )
+          );
+        };
+
+        try {
+          const primaryProvider = selectedModel.provider;
+          let succeeded = false;
+
+          try {
+            await executeProviderWithKeyPool({
+              provider: primaryProvider,
+              model: selectedModel.apiModel,
+              historyMessages: historyForApi,
+              currentText: userMsg.content,
+              currentAttachments,
+              intentInfo,
+              onDelta: appendDelta,
+              onThinkingDelta: appendThinkingDelta,
+              onSwapEvent: setAssistantSwapNotice,
+              signal: controller.signal
+            });
+            succeeded = accumulatedContent.trim().length > 0;
+          } catch (primaryErr) {
+            if (primaryErr.name === 'AbortError') throw primaryErr;
+          }
+
+          if (!succeeded) {
+            if (primaryProvider !== 'gemini') {
+              setAssistantSwapNotice(
+                `🔄 Chuyển sang Gemini Vision (${hasImageAtt ? 'Đọc ảnh inlineData' : 'Phản hồi AI'}) do ${primaryProvider.toUpperCase()} chưa có Key hợp lệ`
+              );
+            }
+            await callGeminiWithVisionSupport({
+              apiKey: apiConfig.geminiKey || '',
+              model: 'gemini-3-flash-preview',
+              historyMessages: historyForApi,
+              currentText: userMsg.content,
+              currentAttachments,
+              intentInfo,
+              onDelta: appendDelta,
+              onThinkingDelta: appendThinkingDelta,
+              signal: controller.signal
+            });
+            succeeded = accumulatedContent.trim().length > 0;
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError' && !accumulatedContent.trim()) {
+            appendDelta(
+              `⚠️ Không thể hoàn tất yêu cầu tới API (${err.message || 'Lỗi kết nối'}). Bạn có thể kiểm tra lại API Key trong mục **API & Swap** hoặc bấm nút **Debug Payload** ở thanh công cụ phía trên để kiểm tra dữ liệu ảnh.`
+            );
+          }
+        } finally {
+          const fence = "`" + "`" + "`";
+          if (intentInfo.mode === 'addon-tool' && intentInfo.isBlender) {
+            const blocks = extractArtifactsFromContent(accumulatedContent);
+            if (!blocks.some((b) => b.isBlenderPython)) {
+              const guaranteedPy = synthesizeBlenderPythonScript(userMsg.content, 'Gehihi');
+              appendDelta("\n\n### 🐍 File Blender Python Scripting (`.py`) hoàn chỉnh:\n" + fence + "python\n" + guaranteedPy + "\n" + fence);
+            }
+          }
+
+          if (intentInfo.mode === 'html-code') {
+            const blocks = extractArtifactsFromContent(accumulatedContent);
+            if (!blocks.some((b) => b.isPreviewable)) {
+              const guaranteedHtml = synthesizeTailoredHtmlCode(userMsg.content);
+              appendDelta("\n\n" + fence + "html\n" + guaranteedHtml + "\n" + fence);
+            }
+          }
+
+          let generatedVisualData = null;
+          if (intentInfo.mode === 'visual-search') {
+            try {
+              const firstImgName = currentAttachments.find((a) => a.type === 'image')?.name || '';
+              const { keyword: extractedKeyword } = detectVisualCategoryAndKeyword(
+                accumulatedContent,
+                firstImgName,
+                trimmedPrompt
+              );
+              if (extractedKeyword) {
+                generatedVisualData = await fetchRelatedImagesAndVideosByKeyword(extractedKeyword);
+              }
+            } catch {}
+          }
+
+          setIsStreaming(false);
+          setChats((prev) =>
+            prev.map((c) =>
+              c.id === targetChatId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMsgId
+                        ? { ...m, isStreaming: false, visualSearchData: generatedVisualData || m.visualSearchData }
+                        : m
+                    )
+                  }
+                : c
+            )
+          );
+
+          const extracted = extractArtifactsFromContent(accumulatedContent);
+          if (intentInfo.mode === 'addon-tool') {
+            const pyBlock = extracted.find((b) => b.isBlenderPython) || extracted[0];
+            if (pyBlock) {
+              setArtifactPanel({
+                isOpen: true,
+                title: '🐍 Blender Python Script (.PY)',
+                code: pyBlock.code,
+                language: pyBlock.language || 'python',
+                activeTab: 'code',
+                isFullscreen: false,
+                refreshKey: Date.now()
+              });
+            }
+          } else if (intentInfo.mode === 'html-code') {
+            const htmlBlock = extracted.find((b) => b.isPreviewable);
+            if (htmlBlock) {
+              setArtifactPanel({
+                isOpen: true,
+                title: '⚡ Chạy thử HTML (Live Preview)',
+                code: htmlBlock.code,
+                language: 'html',
+                activeTab: 'preview',
+                isFullscreen: false,
+                refreshKey: Date.now()
+              });
+            }
+          }
+        }
+      };
+
+      const processFiles = async (fileList) => {
+        const filesArray = Array.from(fileList || []);
+        if (!filesArray.length) return;
+        const newAttachments = [];
+        for (const file of filesArray) {
+          const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name);
+          const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          if (isImage) {
+            try {
+              const normalizedImg = await normalizeImageFileForGemini(file);
+              newAttachments.push({ ...normalizedImg, id });
+            } catch (e) {
+              showToast(`Lỗi đọc ảnh ${file.name}`);
+            }
+          } else {
+            const textContent = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result || ''));
+              reader.onerror = () => resolve(`[Tệp: ${file.name}]`);
+              reader.readAsText(file);
+            });
+            newAttachments.push({
+              id,
+              name: file.name,
+              type: 'file',
+              mimeType: file.type || 'text/plain',
+              size: file.size,
+              textContent: textContent.slice(0, 50000)
+            });
+          }
+        }
+        setAttachments((prev) => [...prev, ...newAttachments]);
+        const imgCount = newAttachments.filter((a) => a.type === 'image').length;
+        if (imgCount > 0) {
+          showToast(`👁️ Đã chuẩn hóa ${imgCount} ảnh (inlineData) sẵn sàng cho Gemini Vision!`);
+        } else {
+          showToast(`Đã đính kèm ${newAttachments.length} tệp tin`);
+        }
+      };
+
+      const handlePaste = (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        const files = [];
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) files.push(file);
+          }
+        }
+        if (files.length > 0) {
+          e.preventDefault();
+          processFiles(files);
+        }
+      };
+
+      const handleAttachSampleVisionImage = (autoSend = false) => {
+        const sampleAtt = createSampleVisionTestAttachment();
+        const samplePrompt =
+          'Hãy đọc toàn bộ nội dung văn bản, mã đơn hàng, thông số kỹ thuật, công thức và số liệu biểu đồ trong bức ảnh báo cáo này rồi phân tích chi tiết.';
+        if (autoSend) {
+          handleSendMessage([sampleAtt], samplePrompt);
+        } else {
+          setAttachments((prev) => [...prev, sampleAtt]);
+          if (!promptText.trim()) setPromptText(samplePrompt);
+          showToast('👁️ Đã tạo ảnh mẫu kiểm thử Vision! Bấm Gửi để Gemini đọc ảnh ngay.');
+          textareaRef.current?.focus();
+        }
+      };
+
+      const toggleVoiceRecording = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          showToast('Trình duyệt chưa hỗ trợ nhận diện giọng nói.');
+          return;
+        }
+        if (isRecording) {
+          recognitionRef.current?.stop();
+          setIsRecording(false);
+          return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'vi-VN';
+        recognition.onstart = () => {
+          setIsRecording(true);
+          showToast('Đang lắng nghe giọng nói...');
+        };
+        recognition.onresult = (event) => {
+          const transcript = event.results?.[0]?.[0]?.transcript || '';
+          if (transcript) setPromptText((prev) => (prev ? `${prev.trim()} ${transcript}` : transcript));
+        };
+        recognition.onerror = () => setIsRecording(false);
+        recognition.onend = () => setIsRecording(false);
+        recognitionRef.current = recognition;
+        recognition.start();
+      };
+
+      const renderMessageContent = (content) => {
+        if (!content) return null;
+        const fence = "`" + "`" + "`";
+        const splitRegex = new RegExp("(" + fence + "[\\s\\S]*?" + fence + ")", "g");
+        const parts = content.split(splitRegex);
+        return parts.map((part, index) => {
+          if (part.startsWith(fence) && part.endsWith(fence)) {
+            const firstNewLine = part.indexOf('\n');
+            const rawLang = firstNewLine !== -1 ? part.slice(3, firstNewLine).trim() || 'code' : 'code';
+            const code = firstNewLine !== -1 ? part.slice(firstNewLine + 1, -3).trim() : part.slice(3, -3).trim();
+            const isBlenderPy =
+              rawLang.toLowerCase() === 'python' ||
+              rawLang.toLowerCase() === 'py' ||
+              code.includes('import bpy') ||
+              code.includes('bl_info');
+            const isPreviewable =
+              !isBlenderPy &&
+              (rawLang.toLowerCase() === 'html' ||
+                rawLang.toLowerCase() === 'svg' ||
+                code.includes('<!DOCTYPE html>') ||
+                code.includes('<html'));
+            const ext = getFileExtensionForLang(isBlenderPy ? 'python' : rawLang);
+            const blockId = `code-${index}-${code.length}`;
+
+            return (
+              <div key={index} className="my-3.5 rounded-2xl overflow-hidden border border-red-200/80 bg-[#18181B] shadow-md">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-[#241919] border-b border-red-950/60 text-xs text-neutral-200 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="w-3.5 h-3.5 text-red-400" />
+                    <span className="font-mono uppercase tracking-wider text-[11px] text-red-200 font-semibold">
+                      {isBlenderPy ? 'PYTHON (BLENDER SCRIPTING .PY)' : rawLang}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {isPreviewable && (
+                      <button
+                        onClick={() =>
+                          setArtifactPanel({
+                            isOpen: true,
+                            title: '⚡ Chạy thử HTML (Artifacts)',
+                            code,
+                            language: 'html',
+                            activeTab: 'preview',
+                            isFullscreen: false,
+                            refreshKey: Date.now()
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold transition shadow-xs"
+                      >
+                        <Play className="w-3 h-3" />
+                        <span>Chạy thử trong Artifacts</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => downloadCodeAsFile(code, isBlenderPy ? 'python' : rawLang, isBlenderPy ? 'gehihi_blender_addon' : 'gehihi_webapp')}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Tải file .{ext.toUpperCase()}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        copyTextSafe(code, 'Mã nguồn');
+                        setCopiedId(blockId);
+                        setTimeout(() => setCopiedId(null), 1800);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full hover:bg-white/10 text-neutral-200 transition"
+                    >
+                      {copiedId === blockId ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">Đã chép</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <pre className="p-4 text-xs font-mono text-neutral-100 overflow-x-auto max-h-96 leading-relaxed select-text">
+                  <code>{code}</code>
+                </pre>
+              </div>
+            );
+          }
+
+          return (
+            <div key={index} className={"space-y-2 leading-relaxed text-[15px] " + (isLight ? "text-zinc-800" : "text-[#ECECEC]")}>
+              {part.split('\n').map((line, lIdx) => {
+                if (!line.trim()) return <div key={lIdx} className="h-1" />;
+                if (line.startsWith('### ')) {
+                  return <h3 key={lIdx} className="text-base font-bold text-red-600 mt-3">{line.slice(4)}</h3>;
+                }
+                if (line.startsWith('## ')) {
+                  return <h2 key={lIdx} className="text-lg font-bold text-red-600 mt-3">{line.slice(3)}</h2>;
+                }
+                if (line.startsWith('> ')) {
+                  return (
+                    <blockquote key={lIdx} className={"border-l-4 border-red-600 pl-3.5 py-1.5 my-2 rounded-r-xl text-sm " + (isLight ? "bg-red-50/80 text-zinc-700" : "bg-[#261919] text-neutral-200")}>
+                      {line.slice(2)}
+                    </blockquote>
+                  );
+                }
+                const formatted = line
+                  .split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s)<]+|\*\*.*?\*\*|`.*?`)/g)
+                  .map((seg, sIdx) => {
+                    if (!seg) return null;
+                    const mdLinkMatch = seg.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+                    if (mdLinkMatch) {
+                      return (
+                        <a
+                          key={sIdx}
+                          href={mdLinkMatch[2]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-red-600 underline hover:text-red-700 break-all"
+                        >
+                          <span>{mdLinkMatch[1]}</span>
+                          <ExternalLink className="w-3 h-3 inline shrink-0" />
+                        </a>
+                      );
+                    }
+                    if (/^https?:\/\/[^\s)<]+$/.test(seg)) {
+                      return (
+                        <a
+                          key={sIdx}
+                          href={seg}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono text-xs text-blue-600 underline hover:text-blue-700 break-all"
+                        >
+                          <span>{seg}</span>
+                          <ExternalLink className="w-3 h-3 inline shrink-0" />
+                        </a>
+                      );
+                    }
+                    if (seg.startsWith('**') && seg.endsWith('**')) {
+                      return <strong key={sIdx} className="font-semibold">{seg.slice(2, -2)}</strong>;
+                    }
+                    if (seg.startsWith('`') && seg.endsWith('`')) {
+                      return <code key={sIdx} className="px-1.5 py-0.5 rounded font-mono text-[13px] bg-red-50 text-red-700 border border-red-200/60">{seg.slice(1, -1)}</code>;
+                    }
+                    return seg;
+                  });
+                return <p key={lIdx}>{formatted}</p>;
+              })}
+            </div>
+          );
+        });
+      };
+
+      const totalUsedTokens = tokenWallet.usedInputTokens + tokenWallet.usedOutputTokens;
+      const remainingTokens = Math.max(0, tokenWallet.purchasedTokens - totalUsedTokens);
+      const remainingPercent =
+        tokenWallet.purchasedTokens > 0
+          ? Math.min(100, Math.max(0, (remainingTokens / tokenWallet.purchasedTokens) * 100))
+          : 0;
+
+      const totalRequestsLimit = Math.max(1, Number(tokenWallet.totalRequestsLimit) || 1500);
+      const usedRequestsCount = Math.max(0, Number(tokenWallet.usedRequestsCount) || 0);
+      const remainingRequestsCount = Math.max(0, totalRequestsLimit - usedRequestsCount);
+      const remainingRequestsPercent = Math.min(
+        100,
+        Math.max(0, (remainingRequestsCount / totalRequestsLimit) * 100)
+      );
+
+      const activeProviderKeys = getProviderKeyList(selectedModel.provider);
+      const activeKeyStatusLabel =
+        activeProviderKeys.length > 0
+          ? `Key #1 (${maskApiKey(activeProviderKeys[0])})`
+          : selectedModel.provider === 'gemini'
+          ? 'Gemini Vision (Mặc định)'
+          : `${selectedModel.provider.toUpperCase()} API`;
+
+      return (
+        <div
+          className={`flex h-screen w-screen overflow-hidden select-none transition-colors duration-300 ${
+            isLight ? 'bg-[#FCFBF9] text-[#18181B]' : 'bg-[#141111] text-[#F5F3F3]'
+          }`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer?.files?.length) processFiles(e.dataTransfer.files);
+          }}
+        >
+          {toastMessage && (
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border bg-white border-red-200 text-zinc-900 text-sm font-medium shadow-xl">
+              <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+          <aside
+            className={`${
+              sidebarOpen ? 'w-[258px]' : 'w-0'
+            } shrink-0 h-full border-r flex flex-col transition-all duration-200 overflow-hidden ${
+              isLight ? 'bg-[#F6F2F0] border-[#ECE2DF]' : 'bg-[#1B1616] border-[#2D2323]'
+            }`}
+          >
+            <div className="flex items-center justify-between px-3.5 pt-4 pb-3 gap-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1.5 rounded-xl text-zinc-500 hover:text-red-600 hover:bg-red-100/60 transition shrink-0"
+                >
+                  <PanelLeft className="w-4 h-4" />
+                </button>
+                <div
+                  onClick={() => { setActiveChatId(null); setPromptText(''); }}
+                  className="flex items-center gap-2 cursor-pointer min-w-0 group"
+                >
+                  <PokeballLogo className="w-6 h-6 shrink-0" />
+                  <span
+                    className={`text-[15px] font-bold tracking-tight truncate ${
+                      isLight ? 'text-zinc-900 group-hover:text-red-600' : 'text-white'
+                    }`}
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    Gehihi Tớ Chọn Cậu
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-3 mb-2">
+              <button
+                onClick={() => { setActiveChatId(null); setPromptText(''); setAttachments([]); }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-[#DC2626] via-[#E11D48] to-[#EF4444] hover:from-[#B91C1C] hover:to-[#DC2626] text-white text-[13.5px] font-semibold transition shadow-md shadow-red-600/20"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Plus className="w-4 h-4" />
+                  <span>Cuộc trò chuyện mới</span>
+                </div>
+              </button>
+            </div>
+
+            <nav className={`px-3 space-y-1 text-[12.5px] ${isLight ? 'text-zinc-700' : 'text-neutral-300'}`}>
+              <button
+                onClick={() => {
+                  setForcedOutputMode('vision');
+                  fileInputRef.current?.click();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${
+                  forcedOutputMode === 'vision'
+                    ? 'bg-red-600 text-white font-semibold shadow-xs'
+                    : 'hover:bg-white/80 hover:text-red-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Eye className={`w-4 h-4 ${forcedOutputMode === 'vision' ? 'text-white' : 'text-blue-600'}`} />
+                  <span>Đọc & Phân tích Ảnh (Vision)</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${forcedOutputMode === 'vision' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'}`}>
+                  OCR/AI
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setForcedOutputMode('chat');
+                  showToast('💬 Đã bật chế độ: Trò chuyện tự nhiên (Chat)');
+                  textareaRef.current?.focus();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${
+                  forcedOutputMode === 'chat'
+                    ? 'bg-red-600 text-white font-semibold shadow-xs'
+                    : 'hover:bg-white/80 hover:text-red-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className={`w-4 h-4 ${forcedOutputMode === 'chat' ? 'text-white' : 'text-red-500'}`} />
+                  <span>Chế độ Trò chuyện (Chat)</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${forcedOutputMode === 'chat' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700'}`}>
+                  Chat
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setForcedOutputMode('addon');
+                  showToast('🐍 Đã bật chế độ: Code Addon cho Blender (.PY)');
+                  textareaRef.current?.focus();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${
+                  forcedOutputMode === 'addon'
+                    ? 'bg-red-600 text-white font-semibold shadow-xs'
+                    : 'hover:bg-white/80 hover:text-red-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Box className={`w-4 h-4 ${forcedOutputMode === 'addon' ? 'text-white' : 'text-red-500'}`} />
+                  <span>Code Addon Blender (.PY)</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${forcedOutputMode === 'addon' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'}`}>
+                  .PY
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setForcedOutputMode('html');
+                  showToast('⚡ Đã bật chế độ: Ép xuất File HTML & Chạy thử');
+                  textareaRef.current?.focus();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${
+                  forcedOutputMode === 'html'
+                    ? 'bg-red-600 text-white font-semibold shadow-xs'
+                    : 'hover:bg-white/80 hover:text-red-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Code2 className={`w-4 h-4 ${forcedOutputMode === 'html' ? 'text-white' : 'text-red-500'}`} />
+                  <span>Ép xuất File HTML</span>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${forcedOutputMode === 'html' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
+                  .HTML
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setForcedOutputMode('visual');
+                  fileInputRef.current?.click();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${
+                  forcedOutputMode === 'visual'
+                    ? 'bg-red-600 text-white font-semibold shadow-xs'
+                    : 'hover:bg-white/80 hover:text-red-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ImageIcon className={`w-4 h-4 ${forcedOutputMode === 'visual' ? 'text-white' : 'text-red-500'}`} />
+                  <span>Tìm Phụ kiện Xe qua Ảnh</span>
+                </div>
+              </button>
+            </nav>
+
+            <div className="flex-1 overflow-y-auto px-3 mt-3 space-y-3">
+              <div>
+                <button
+                  onClick={() => setPinnedExpanded(!pinnedExpanded)}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-red-700/70"
+                >
+                  <span>Lịch sử trò chuyện</span>
+                  {pinnedExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                </button>
+                {pinnedExpanded && (
+                  <div className="mt-1 space-y-1">
+                    {chats.map((chat) => (
+                      <div
+                        key={chat.id}
+                        onClick={() => setActiveChatId(chat.id)}
+                        className={`group flex items-center justify-between px-3 py-2 rounded-xl text-[13px] cursor-pointer transition ${
+                          activeChatId === chat.id
+                            ? 'bg-white text-red-600 font-semibold shadow-xs border border-red-200/80'
+                            : 'hover:bg-white/70'
+                        }`}
+                      >
+                        <span className="truncate">{chat.title}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setChats((prev) => prev.filter((c) => c.id !== chat.id));
+                            if (activeChatId === chat.id) setActiveChatId(null);
+                          }}
+                          className="hidden group-hover:block text-zinc-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={`p-3 border-t space-y-2.5 ${isLight ? 'border-[#ECE2DF] bg-[#EFE9E6]/70' : 'border-[#2D2323] bg-[#161212]'}`}>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={() => openProtectedAdminArea('api')}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl flex-1 min-w-0 text-left hover:bg-white/80 transition group"
+                  title="Nhấn vào Icon User (Mật khẩu bảo mật) để mở cấu hình API & System Prompt"
+                >
+                  <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-rose-500 ring-2 ring-amber-400 shadow-md flex items-center justify-center text-xs font-bold text-white shrink-0 group-hover:scale-105 transition">
+                    P
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center shadow-xs">
+                      <Lock className="w-2 h-2" />
+                    </span>
+                  </div>
+                  <div className="truncate text-xs flex-1 min-w-0">
+                    <div className={`font-bold truncate flex items-center gap-1 ${isLight ? 'text-zinc-900 group-hover:text-red-600' : 'text-white'}`}>
+                      <span>Phong</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-semibold truncate">
+                      ● {selectedModel.label}
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div
+                onClick={() => openProtectedAdminArea('token')}
+                className={`p-2.5 rounded-2xl border cursor-pointer transition space-y-2 ${
+                  isLight ? 'bg-white hover:border-red-300 border-red-200/80 shadow-2xs' : 'bg-[#1F1818] border-red-900/40'
+                }`}
+                title="Nhấn để quản lý hạn mức Lượt gọi & Token (Yêu cầu mật khẩu)"
+              >
+                <div className="flex items-center justify-between text-[10px] pb-1 border-b border-red-100/70">
+                  <span className="font-bold text-zinc-500 uppercase tracking-wider">Hạn mức API đang dùng</span>
+                  <span className="font-mono font-semibold text-red-600 truncate max-w-[125px]">
+                    {activeKeyStatusLabel}
+                  </span>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1 font-semibold text-amber-600">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Số lượt còn lại</span>
+                    </div>
+                    <span className={`font-mono font-bold text-xs ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                      {remainingRequestsCount.toLocaleString('en-US')} / {totalRequestsLimit.toLocaleString('en-US')}
+                    </span>
+                  </div>
+                  <div className="w-full h-1 rounded-full overflow-hidden mt-1 bg-amber-100">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
+                      style={{ width: `${remainingRequestsPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1 font-semibold text-red-600">
+                      <Coins className="w-3 h-3" />
+                      <span>Token khả dụng</span>
+                    </div>
+                    <span className={`font-mono font-bold text-xs ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                      {remainingTokens.toLocaleString('en-US')}
+                    </span>
+                  </div>
+                  <div className="w-full h-1 rounded-full overflow-hidden mt-1 bg-red-100">
+                    <div
+                      className="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-300"
+                      style={{ width: `${remainingPercent}%` }}
+                    />
+                  </div>
+                  {tokenWallet.lastCallTokens > 0 && (
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1 font-mono">
+                      <span>Đã dùng: {totalUsedTokens.toLocaleString('en-US')} tok</span>
+                      <span>-{tokenWallet.lastCallTokens} tok/lượt</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <main className={`flex-1 flex flex-col h-full min-w-0 relative overflow-hidden ${isLight ? 'bg-[#FCFBF9]' : 'bg-[#141111]'}`}>
+            <header className="h-13 px-4 sm:px-6 py-2 flex items-center justify-between shrink-0 z-10 border-b border-red-100/60 flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {!sidebarOpen && (
+                  <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl text-zinc-600 hover:text-red-600 hover:bg-red-50">
+                    <PanelLeft className="w-4 h-4" />
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowModelDropdown(true)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition shadow-xs ${
+                    isLight ? 'bg-white border-red-200/90 text-zinc-800 hover:border-red-400' : 'bg-[#1F1818] border-red-900/50 text-white'
+                  }`}
+                >
+                  <PokeballLogo className="w-4 h-4" />
+                  <span>{selectedModel.label}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowThinkingModal(true)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition ${
+                    activeThinkingPreset.budget > 0
+                      ? 'bg-red-600 border-red-600 text-white shadow-xs'
+                      : isLight
+                      ? 'bg-white border-red-200 text-zinc-700 hover:border-red-400'
+                      : 'bg-[#1F1818] border-red-900/40 text-neutral-300'
+                  }`}
+                >
+                  <BrainCircuit className="w-3.5 h-3.5" />
+                  <span>{activeThinkingPreset.shortLabel}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDebugModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 text-xs font-semibold transition"
+                  title="Kiểm tra JSON Payload (inlineData) gửi lên Gemini API"
+                >
+                  <Bug className="w-3.5 h-3.5" />
+                  <span>Debug Payload</span>
+                </button>
+
+                <button
+                  onClick={() => setThemeMode((prev) => (prev === 'red-white' ? 'red-dark' : 'red-white'))}
+                  className="p-2 rounded-full border bg-white border-red-200 text-red-600 hover:bg-red-50 transition"
+                  title="Đổi giao diện Sáng / Tối"
+                >
+                  {isLight ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                </button>
+
+                <button
+                  onClick={() =>
+                    setArtifactPanel((prev) => ({
+                      ...prev,
+                      isOpen: !prev.isOpen,
+                      code: prev.code || synthesizeTailoredHtmlCode('Dashboard Tương Tác')
+                    }))
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition ${
+                    artifactPanel.isOpen
+                      ? 'bg-red-600 border-red-600 text-white'
+                      : 'bg-white border-red-200 text-zinc-700 hover:text-red-600'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Artifacts</span>
+                </button>
+              </div>
+            </header>
+
+            <div className="flex-1 flex flex-col min-h-0 z-10">
+              {!activeChat || activeChat.messages.length === 0 ? (
+                <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 py-6">
+                  <div className="w-full max-w-[690px] mx-auto flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-3 mb-4 text-center">
+                      <PokeballLogo className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 drop-shadow-xs" animated={isStreaming} />
+                      <h1
+                        className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-[#B91C1C] via-[#DC2626] to-[#EA580C] bg-clip-text text-transparent"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                      >
+                        Gehihi Xin Chào
+                      </h1>
+                    </div>
+                    <p className="text-xs sm:text-sm text-zinc-500 mb-5 text-center">
+                      Đã tích hợp chuẩn <strong className="text-red-600">Gemini Multimodal Vision (`inlineData`)</strong> — Đọc văn bản trong ảnh (OCR), phân tích biểu đồ, nhận diện vật thể & viết code.
+                    </p>
+
+                    <div className="w-full">
+                      <div
+                        className={`rounded-3xl border transition-all p-4 ${
+                          isLight
+                            ? 'bg-white/95 border-red-200/90 focus-within:border-red-500 shadow-[0_12px_42px_-10px_rgba(220,38,38,0.12)]'
+                            : 'bg-[#1E1717] border-red-900/50 focus-within:border-red-500 shadow-2xl'
+                        }`}
+                      >
+                        {attachments.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2 pb-3 mb-3 border-b border-red-100">
+                            {attachments.map((att) => (
+                              <div key={att.id} className="relative flex items-center gap-2.5 p-2 rounded-2xl border bg-red-50/60 border-red-200 text-zinc-900 pr-7 max-w-[240px]">
+                                {att.type === 'image' && att.dataUrl ? (
+                                  <img src={att.dataUrl} alt={att.name} className="w-10 h-10 rounded-xl object-cover border border-red-200" />
+                                ) : (
+                                  <FileText className="w-5 h-5 text-red-600" />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="text-xs font-semibold truncate">{att.name}</div>
+                                  {att.type === 'image' && (
+                                    <div className="text-[10px] text-emerald-700 font-bold">
+                                      ✓ {att.mimeType} ({Math.round((att.base64Data?.length || 0) / 1024)} KB)
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== att.id))}
+                                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                            {attachments.some((a) => a.type === 'image') && (
+                              <button
+                                onClick={() => handleSendMessage()}
+                                className="px-3.5 py-2 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Đọc & Phân tích Ảnh ngay</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        <textarea
+                          ref={textareaRef}
+                          rows={3}
+                          value={promptText}
+                          onChange={(e) => setPromptText(e.target.value)}
+                          onPaste={handlePaste}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          placeholder="Tải ảnh lên (hoặc Ctrl+V dán ảnh) để Gemini đọc & phân tích chi tiết, hoặc nhập yêu cầu viết code..."
+                          className={`w-full bg-transparent text-[15px] resize-none focus:outline-none leading-relaxed select-text ${
+                            isLight ? 'text-zinc-900 placeholder-zinc-400' : 'text-white placeholder-neutral-500'
+                          }`}
+                        />
+
+                        <div className="flex flex-col gap-2 pt-2.5 mt-1 border-t border-red-100/60">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="px-2.5 py-1.5 rounded-full flex items-center gap-1 border bg-red-50 hover:bg-red-100 border-red-200 text-red-600 text-xs font-semibold transition"
+                                title="Tải 1 hoặc nhiều ảnh lên"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Tải Ảnh</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleAttachSampleVisionImage(false)}
+                                className="px-2.5 py-1.5 rounded-full flex items-center gap-1 border bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 text-xs font-semibold transition"
+                                title="Tạo 1 bức ảnh báo cáo mẫu để test khả năng đọc chữ & biểu đồ của Gemini"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>+ Ảnh mẫu Test Vision</span>
+                              </button>
+
+                              <div className="flex items-center flex-wrap gap-1 p-1 rounded-2xl border bg-[#F7F2F0] border-red-200/70 text-[11px]">
+                                <button
+                                  onClick={() => setForcedOutputMode('auto')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'auto' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  🔄 Tự động
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('vision')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'vision' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  👁️ Đọc Ảnh AI
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('addon')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'addon' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  🐍 Blender (.PY)
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('html')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'html' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  ⚡ File HTML
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={toggleVoiceRecording}
+                                className={`p-2 rounded-full transition ${
+                                  isRecording ? 'bg-red-600 text-white animate-pulse' : 'text-zinc-500 hover:text-red-600'
+                                }`}
+                              >
+                                <Mic className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => handleSendMessage()}
+                                className="w-9 h-9 rounded-full bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#B91C1C] hover:to-[#DC2626] text-white flex items-center justify-center transition shadow-md"
+                              >
+                                <ArrowUp className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] px-1 text-zinc-500">
+                            <span>
+                              Chế độ đang hoạt động: <strong className="text-red-600">{liveIntentPreview.label}</strong>
+                            </span>
+                            <span className="text-[11px] text-emerald-600 font-semibold">
+                              ✓ Blender 5.0 Prompt & Vision Ready
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3.5">
+                        {QUICK_SUGGESTION_CARDS.map((card) => {
+                          const IconComp = card.icon;
+                          return (
+                            <button
+                              key={card.id}
+                              onClick={() => {
+                                if (card.id === 'sug-sample-vision') {
+                                  handleAttachSampleVisionImage(true);
+                                } else if (card.id === 'sug-upload-vision') {
+                                  setForcedOutputMode('vision');
+                                  fileInputRef.current?.click();
+                                } else {
+                                  setPromptText(card.prompt);
+                                  textareaRef.current?.focus();
+                                }
+                              }}
+                              className="flex items-center gap-2 p-2.5 rounded-2xl border bg-white hover:bg-red-50/60 border-red-200/80 text-zinc-800 hover:text-red-600 text-[11.5px] font-semibold transition text-left shadow-xs"
+                            >
+                              <div className="p-1.5 rounded-xl bg-red-50 text-red-600 shrink-0">
+                                <IconComp className="w-3.5 h-3.5" />
+                              </div>
+                              <span className="line-clamp-2">{card.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
+                    <div className="max-w-3xl mx-auto space-y-6">
+                      {activeChat.messages.map((msg) => (
+                        <div key={msg.id} className="space-y-2">
+                          {msg.role === 'user' ? (
+                            <div className="flex flex-col items-end">
+                              {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-2 justify-end">
+                                  {msg.attachments.map((att) =>
+                                    att.type === 'image' && att.dataUrl ? (
+                                      <div key={att.id} className="relative group">
+                                        <img
+                                          src={att.dataUrl}
+                                          alt={att.name}
+                                          className="w-32 h-32 sm:w-44 sm:h-44 object-cover rounded-2xl border-2 border-red-300 shadow-md"
+                                        />
+                                        <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-mono">
+                                          {att.mimeType || 'image/png'}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div key={att.id} className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-semibold">
+                                        📎 {att.name}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                              <div className="max-w-[85%] rounded-3xl rounded-br-lg px-5 py-3 bg-gradient-to-r from-[#DC2626] to-[#E11D48] text-white text-[15px] leading-relaxed shadow-md select-text">
+                                {msg.content}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={`flex items-start gap-3.5 p-4 rounded-3xl border select-text ${isLight ? 'bg-white border-red-100/90 shadow-xs' : 'bg-[#1C1616] border-red-950/60'}`}>
+                              <div className="w-7 h-7 rounded-full border bg-red-50 border-red-200 flex items-center justify-center shrink-0 mt-0.5">
+                                <PokeballLogo className="w-4 h-4" animated={msg.isStreaming} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                                      Gehihi Tớ Chọn Cậu
+                                    </span>
+                                    {msg.analyzedImageCount > 0 && (
+                                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
+                                        👁️ Đã đọc {msg.analyzedImageCount} ảnh (inlineData)
+                                      </span>
+                                    )}
+                                  </div>
+                                  {msg.analyzedImageCount > 0 && (
+                                    <button
+                                      onClick={() => setShowDebugModal(true)}
+                                      className="text-[11px] text-blue-600 hover:underline font-semibold flex items-center gap-1"
+                                    >
+                                      <Bug className="w-3 h-3" />
+                                      <span>Xem Payload ảnh</span>
+                                    </button>
+                                  )}
+                                </div>
+
+                                {msg.swapNotice && (
+                                  <div className="mb-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+                                    {msg.swapNotice}
+                                  </div>
+                                )}
+
+                                <ThinkingBlockView
+                                  thinkingText={msg.thinkingText}
+                                  isLight={isLight}
+                                  thinkingPresetLabel={msg.thinkingPresetLabel}
+                                />
+
+                                <div>{renderMessageContent(msg.content)}</div>
+
+                                {msg.visualSearchData && (
+                                  <VisualSearchHubCard
+                                    visualData={msg.visualSearchData}
+                                    isLight={isLight}
+                                    onCopyLink={(url) => copyTextSafe(url, 'Đường link')}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </div>
+
+                  <div className="px-4 pb-4 pt-2">
+                    <div className="max-w-3xl mx-auto">
+                      <div className={`rounded-3xl border p-3 ${isLight ? 'bg-white border-red-200 shadow-lg' : 'bg-[#1E1717] border-red-900/50'}`}>
+                        {attachments.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2 pb-2.5 mb-2.5 border-b border-red-100">
+                            {attachments.map((att) => (
+                              <div key={att.id} className="relative flex items-center gap-2 p-1.5 rounded-xl border bg-red-50/70 border-red-200 text-zinc-900 pr-6 max-w-[220px]">
+                                {att.type === 'image' && att.dataUrl ? (
+                                  <img src={att.dataUrl} alt={att.name} className="w-9 h-9 rounded-lg object-cover border border-red-200" />
+                                ) : (
+                                  <FileText className="w-4 h-4 text-red-600" />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="text-[11px] font-semibold truncate">{att.name}</div>
+                                  {att.type === 'image' && (
+                                    <div className="text-[9px] text-emerald-700 font-bold">
+                                      ✓ {att.mimeType} · Base64 Ready
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== att.id))}
+                                  className="absolute top-1 right-1 p-0.5 rounded-full bg-red-100 text-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                            {attachments.some((a) => a.type === 'image') && (
+                              <button
+                                onClick={() => handleSendMessage()}
+                                className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Đọc & Phân tích Ảnh ngay</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        <textarea
+                          ref={textareaRef}
+                          rows={2}
+                          value={promptText}
+                          onChange={(e) => setPromptText(e.target.value)}
+                          onPaste={handlePaste}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          placeholder="Tải ảnh lên (hoặc Ctrl+V dán ảnh) để Gemini đọc & phân tích, hoặc nhập câu hỏi..."
+                          className={`w-full bg-transparent text-[14.5px] resize-none focus:outline-none select-text ${isLight ? 'text-zinc-900' : 'text-white'}`}
+                        />
+
+                        <div className="flex flex-col gap-2 pt-2 mt-1 border-t border-red-100/70">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="px-2.5 py-1.5 rounded-full flex items-center gap-1 border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 text-xs font-semibold"
+                                title="Tải ảnh hoặc tệp lên"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Tải Ảnh</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleAttachSampleVisionImage(false)}
+                                className="px-2.5 py-1.5 rounded-full flex items-center gap-1 border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs font-semibold"
+                                title="Tạo nhanh 1 bức ảnh mẫu có chữ & biểu đồ để kiểm thử Gemini Vision"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>+ Ảnh mẫu Test Vision</span>
+                              </button>
+
+                              <div className="flex items-center flex-wrap gap-1 p-1 rounded-2xl border bg-[#F7F2F0] border-red-200/80 text-[11px]">
+                                <button
+                                  onClick={() => setForcedOutputMode('auto')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'auto' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  🔄 Tự động
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('vision')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'vision' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  👁️ Đọc Ảnh AI
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('addon')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'addon' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  🐍 Blender (.PY)
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('html')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'html' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  ⚡ File HTML
+                                </button>
+                                <button
+                                  onClick={() => setForcedOutputMode('visual')}
+                                  className={`px-2 py-1 rounded-xl font-semibold transition ${
+                                    forcedOutputMode === 'visual' ? 'bg-red-600 text-white shadow-xs' : 'text-zinc-700 hover:bg-white'
+                                  }`}
+                                >
+                                  🔍 Tìm Phụ kiện
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={toggleVoiceRecording}
+                                className={`p-2 rounded-full transition ${
+                                  isRecording ? 'bg-red-600 text-white animate-pulse' : 'text-zinc-500 hover:text-red-600'
+                                }`}
+                              >
+                                <Mic className="w-4 h-4" />
+                              </button>
+                              {isStreaming ? (
+                                <button onClick={() => abortControllerRef.current?.abort()} className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center">
+                                  <Square className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <button onClick={() => handleSendMessage()} className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-sm">
+                                  <ArrowUp className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] px-1 text-zinc-500">
+                            <span>
+                              Chế độ hiện tại: <strong className="text-red-600">{liveIntentPreview.label}</strong>
+                            </span>
+                            <span className="text-[11px] text-emerald-600 font-semibold">
+                              ✓ Blender 5.0 Prompt & Vision Ready
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.py,.html,.js,.txt,.json,.md"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                processFiles(e.target.files);
+                e.target.value = '';
+              }}
+            />
+          </main>
+
+          {artifactPanel.isOpen && (
+            <aside
+              className={`${
+                artifactPanel.isFullscreen ? 'fixed inset-0 z-50 w-full' : 'w-full sm:w-[460px] lg:w-[540px]'
+              } h-full border-l border-red-200 bg-white flex flex-col shrink-0 shadow-2xl`}
+            >
+              <div className="h-14 px-4 border-b border-red-100 flex items-center justify-between bg-[#FCFBF9] gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Layers className="w-4 h-4 text-red-600 shrink-0" />
+                  <span className="text-xs sm:text-sm font-bold text-zinc-900 truncate">{artifactPanel.title}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex p-0.5 rounded-xl bg-red-50 border border-red-200 text-xs">
+                    <button
+                      onClick={() => setArtifactPanel((p) => ({ ...p, activeTab: 'preview', refreshKey: Date.now() }))}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${artifactPanel.activeTab === 'preview' ? 'bg-red-600 text-white' : 'text-zinc-600'}`}
+                    >
+                      ▶ Chạy HTML
+                    </button>
+                    <button
+                      onClick={() => setArtifactPanel((p) => ({ ...p, activeTab: 'code' }))}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${artifactPanel.activeTab === 'code' ? 'bg-red-600 text-white' : 'text-zinc-600'}`}
+                    >
+                      Sửa Code
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => downloadCodeAsFile(artifactPanel.code, artifactPanel.language, 'gehihi_artifact')}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>.{getFileExtensionForLang(artifactPanel.language).toUpperCase()}</span>
+                  </button>
+                  <button
+                    onClick={() => setArtifactPanel((p) => ({ ...p, isFullscreen: !p.isFullscreen }))}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-500"
+                  >
+                    {artifactPanel.isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => setArtifactPanel((p) => ({ ...p, isOpen: false, isFullscreen: false }))}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-hidden bg-white flex flex-col">
+                {artifactPanel.activeTab === 'preview' ? (
+                  <iframe
+                    key={artifactPanel.refreshKey}
+                    title="Artifact Live Preview"
+                    srcDoc={artifactPanel.code}
+                    sandbox="allow-scripts allow-modals allow-forms"
+                    className="w-full h-full border-0"
+                  />
+                ) : (
+                  <textarea
+                    value={artifactPanel.code}
+                    onChange={(e) => setArtifactPanel((p) => ({ ...p, code: e.target.value }))}
+                    className="w-full h-full p-4 bg-[#18181B] text-neutral-100 font-mono text-xs focus:outline-none resize-none select-text"
+                    spellCheck={false}
+                  />
+                )}
+              </div>
+            </aside>
+          )}
+
+          {showDebugModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4" onClick={() => setShowDebugModal(false)}>
+              <div className="w-full max-w-2xl rounded-2xl bg-[#1C1C1A] border border-[#383834] shadow-2xl overflow-hidden flex flex-col max-h-[88vh]" onClick={(e) => e.stopPropagation()}>
+                <div className="px-5 py-4 border-b border-[#2C2C29] flex items-center justify-between bg-[#181816]">
+                  <div className="flex items-center gap-2.5">
+                    <Bug className="w-5 h-5 text-blue-400" />
+                    <div>
+                      <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                        Trình kiểm tra Gemini Vision Payload (`inlineData`)
+                      </h2>
+                      <p className="text-[11px] text-neutral-400">
+                        Hiển thị cấu trúc JSON thực tế gửi lên Gemini REST API khi phân tích hình ảnh
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowDebugModal(false)} className="text-neutral-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs text-neutral-200 select-text">
+                  <div className="grid sm:grid-cols-3 gap-2.5">
+                    <div className="p-3 rounded-xl bg-[#141413] border border-[#2C2C29]">
+                      <div className="text-[10px] text-neutral-400 uppercase">Model xử lý ảnh</div>
+                      <div className="text-xs font-bold font-mono text-blue-400 mt-1">{lastVisionPayloadDebug.model}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#141413] border border-[#2C2C29]">
+                      <div className="text-[10px] text-neutral-400 uppercase">Chế độ xác thực</div>
+                      <div className="text-xs font-bold text-emerald-400 mt-1">
+                        {lastVisionPayloadDebug.usedBuiltInRuntimeKey ? 'Gemini Tích hợp sẵn (Runtime)' : 'API Key Cá nhân'}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#141413] border border-[#2C2C29]">
+                      <div className="text-[10px] text-neutral-400 uppercase">Số ảnh trong Payload</div>
+                      <div className="text-xs font-bold text-amber-400 mt-1">{lastVisionPayloadDebug.imageCount} hình ảnh</div>
+                    </div>
+                  </div>
+
+                  {lastVisionPayloadDebug.imagesMeta && lastVisionPayloadDebug.imagesMeta.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-bold text-white">Chi tiết ảnh đã tách tiền tố Base64:</div>
+                      {lastVisionPayloadDebug.imagesMeta.map((img, i) => (
+                        <div key={i} className="p-2.5 rounded-xl bg-[#141413] border border-[#2C2C29] flex items-center justify-between flex-wrap gap-2 font-mono text-[11px]">
+                          <span className="text-emerald-400 font-bold">{img.name}</span>
+                          <span>mimeType: <strong className="text-blue-300">{img.mimeType}</strong></span>
+                          <span>Kích thước: {img.dimensions}</span>
+                          <span>Base64 length: {img.base64Length.toLocaleString()} chars</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">Cấu trúc JSON Payload gửi tới `generateContent`:</span>
+                      <button
+                        onClick={() => copyTextSafe(JSON.stringify(lastVisionPayloadDebug.payloadPreview, null, 2), 'JSON Payload')}
+                        className="px-2.5 py-1 rounded bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 text-[11px] font-semibold"
+                      >
+                        Copy JSON Payload
+                      </button>
+                    </div>
+                    <pre className="p-3.5 rounded-xl bg-[#141413] border border-[#2C2C29] text-[11px] text-emerald-400 font-mono overflow-x-auto max-h-64 leading-relaxed">
+                      {JSON.stringify(lastVisionPayloadDebug.payloadPreview, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="px-5 py-3 border-t border-[#2C2C29] bg-[#181816] flex justify-end">
+                  <button
+                    onClick={() => setShowDebugModal(false)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showTokenTopupModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4" onClick={() => setShowTokenTopupModal(false)}>
+              <div className="w-full max-w-md rounded-2xl bg-[#1C1C1A] border border-[#383834] shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-[#2C2C29] pb-3">
+                  <h2 className="text-base font-semibold text-white">Quản lý Số Lượt & Hạn mức Token API</h2>
+                  <button onClick={() => setShowTokenTopupModal(false)} className="text-neutral-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 text-center">
+                  <div className="p-3 rounded-xl bg-[#141413] border border-[#2C2C29]">
+                    <div className="text-[11px] text-neutral-400">Số lượt còn lại</div>
+                    <div className="text-sm font-bold font-mono text-amber-400 mt-1">
+                      {remainingRequestsCount.toLocaleString('en-US')} / {totalRequestsLimit.toLocaleString('en-US')}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-[#141413] border border-[#2C2C29]">
+                    <div className="text-[11px] text-neutral-400">Token còn lại</div>
+                    <div className="text-sm font-bold font-mono text-emerald-400 mt-1">
+                      {remainingTokens.toLocaleString('en-US')}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs text-neutral-300">Cập nhật tổng số lượt (Requests Limit):</label>
+                  <input
+                    type="number"
+                    value={topupRequestsInput}
+                    onChange={(e) => setTopupRequestsInput(e.target.value)}
+                    className="w-full bg-[#141413] border border-[#383834] rounded-lg px-3 py-2 text-sm text-white font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs text-neutral-300">Cập nhật tổng số Token:</label>
+                  <input
+                    type="number"
+                    value={topupTokenInput}
+                    onChange={(e) => setTopupTokenInput(e.target.value)}
+                    className="w-full bg-[#141413] border border-[#383834] rounded-lg px-3 py-2 text-sm text-white font-mono"
+                  />
+                </div>
+                <div className="flex justify-between gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setTokenWallet((prev) => ({
+                        ...prev,
+                        usedInputTokens: 0,
+                        usedOutputTokens: 0,
+                        lastCallTokens: 0,
+                        usedRequestsCount: 0
+                      }));
+                      showToast('Đã đặt lại bộ đếm lượt và Token đã dùng về 0!');
+                    }}
+                    className="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold"
+                  >
+                    Reset bộ đếm đã dùng
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowTokenTopupModal(false);
+                        setShowApiModal(true);
+                      }}
+                      className="px-3 py-2 rounded-lg bg-amber-600/20 border border-amber-500/40 text-amber-300 text-xs font-semibold"
+                    >
+                      Mở Cấu hình API
+                    </button>
+                    <button
+                      onClick={() => {
+                        const tokVal = Math.max(0, parseInt(topupTokenInput, 10) || 0);
+                        const reqVal = Math.max(1, parseInt(topupRequestsInput, 10) || 1500);
+                        setTokenWallet((prev) => ({
+                          ...prev,
+                          purchasedTokens: tokVal,
+                          totalRequestsLimit: reqVal
+                        }));
+                        setShowTokenTopupModal(false);
+                        showToast('Đã lưu hạn mức Lượt & Token!');
+                      }}
+                      className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                    >
+                      Lưu hạn mức
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showPasswordModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4" onClick={() => setShowPasswordModal(false)}>
+              <form
+                onSubmit={handleVerifyAdminPassword}
+                className="w-full max-w-sm rounded-2xl bg-[#1C1C1A] border border-amber-500/40 shadow-2xl p-6 space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-[#2C2C29] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-white">Xác thực Quản trị viên</h2>
+                      <p className="text-[11px] text-neutral-400">Nhập mật khẩu để mở cấu hình API & Swap</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setShowPasswordModal(false)} className="text-neutral-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-neutral-300">
+                    Mật khẩu bảo mật:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswordChars ? 'text' : 'password'}
+                      autoFocus
+                      value={passwordInput}
+                      onChange={(e) => {
+                        setPasswordInput(e.target.value);
+                        if (passwordError) setPasswordError('');
+                      }}
+                      placeholder="Nhập mật khẩu..."
+                      className="w-full bg-[#141413] border border-[#383834] focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono tracking-widest focus:outline-none pr-16"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordChars((v) => !v)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-neutral-400 hover:text-white px-2 py-1 rounded"
+                    >
+                      {showPasswordChars ? 'Ẩn' : 'Hiện'}
+                    </button>
+                  </div>
+                  {passwordError && (
+                    <p className="text-xs text-red-400 font-medium">{passwordError}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white text-xs font-bold shadow-md"
+                  >
+                    Mở khóa
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {showApiModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4" onClick={() => setShowApiModal(false)}>
+              <div className="w-full max-w-2xl rounded-2xl bg-[#1C1C1A] border border-[#383834] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                <div className="px-6 py-4 border-b border-[#2C2C29] flex items-center justify-between bg-[#181816]">
+                  <div>
+                    <h2 className="text-base font-bold text-white">Cấu hình API Keys, Auto-Swap & System Prompt Blender 5.0</h2>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Đã mở khóa bảo mật. Cài đặt API Key cho Gemini, Claude, OpenAI GPT và System Prompt mặc định cho Blender 5.0.
+                    </p>
+                  </div>
+                  <button onClick={() => setShowApiModal(false)} className="text-neutral-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                  <div className="p-4 rounded-xl bg-[#141413] border border-amber-500/40 space-y-2.5">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <Box className="w-4 h-4 text-amber-400" />
+                        <span className="font-bold text-white text-sm">
+                          System Prompt Mặc định: Chuẩn Code Addon Blender 5.0 (Áp dụng cho Mọi Model)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={apiConfig.enableBlender5MasterPrompt !== false}
+                            onChange={(e) =>
+                              setApiConfig((p) => ({ ...p, enableBlender5MasterPrompt: e.target.checked }))
+                            }
+                            className="accent-red-600"
+                          />
+                          <span>Kích hoạt cho Gemini / Claude / GPT</span>
+                        </label>
+                        <button
+                          onClick={() =>
+                            setApiConfig((p) => ({ ...p, blender5MasterPrompt: DEFAULT_BLENDER_5_MASTER_PROMPT }))
+                          }
+                          className="px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px]"
+                        >
+                          Khôi phục mặc định
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={apiConfig.blender5MasterPrompt || DEFAULT_BLENDER_5_MASTER_PROMPT}
+                      onChange={(e) =>
+                        setApiConfig((p) => ({ ...p, blender5MasterPrompt: e.target.value }))
+                      }
+                      className="w-full bg-[#1C1C1A] border border-[#383834] focus:border-amber-400 rounded-lg p-2.5 text-[11px] text-neutral-200 font-mono leading-relaxed focus:outline-none"
+                    />
+                  </div>
+
+                  {[
+                    {
+                      id: 'gemini',
+                      title: '1. Google Gemini API Keys (Khuyên dùng cho đọc & phân tích ảnh)',
+                      primaryField: 'geminiKey',
+                      backupField: 'geminiBackupKeys',
+                      placeholder: 'Để trống để dùng Gemini tích hợp sẵn, hoặc dán AIzaSy...'
+                    },
+                    {
+                      id: 'anthropic',
+                      title: '2. Anthropic Claude API Keys',
+                      primaryField: 'anthropicKey',
+                      backupField: 'anthropicBackupKeys',
+                      placeholder: 'sk-ant-...'
+                    },
+                    {
+                      id: 'openai',
+                      title: '3. OpenAI GPT API Keys (GPT-4o, GPT-4.1, o3)',
+                      primaryField: 'openaiKey',
+                      backupField: 'openaiBackupKeys',
+                      placeholder: 'sk-proj-... hoặc sk-...'
+                    }
+                  ].map((prov) => {
+                    const pool = getProviderKeyList(prov.id);
+                    const deadMap = apiConfig.deadKeysMap || {};
+                    return (
+                      <div key={prov.id} className="p-4 rounded-xl bg-[#141413] border border-[#2C2C29] space-y-3">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-sm">{prov.title}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-red-600/20 text-red-300 border border-red-500/30 text-[11px] font-bold">
+                              {pool.length > 0 ? `${pool.length} Key trong Pool` : prov.id === 'gemini' ? 'Đang dùng Key tích hợp sẵn' : '0 Key'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => manualRotateKey(prov.id)}
+                            className="px-2.5 py-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 font-semibold"
+                          >
+                            🔄 Đảo Key sang dự phòng
+                          </button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-neutral-400 font-medium">
+                            Key đang dùng chính (Primary Key):
+                          </label>
+                          <input
+                            type="text"
+                            value={apiConfig[prov.primaryField] || ''}
+                            onChange={(e) => setApiConfig((p) => ({ ...p, [prov.primaryField]: e.target.value }))}
+                            placeholder={prov.placeholder}
+                            className="w-full bg-[#1C1C1A] border border-[#383834] focus:border-red-500 rounded-lg px-3 py-2 text-white font-mono focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#1B1B18] border border-dashed border-red-500/40 space-y-2">
+                          <label className="text-[11px] font-semibold text-red-300 block">
+                            ➕ Nhập thêm API Key dự phòng để tự động Swap khi Key chính hết hạn:
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newBackupKeyInput[prov.id] || ''}
+                              onChange={(e) =>
+                                setNewBackupKeyInput((prev) => ({ ...prev, [prov.id]: e.target.value }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addBackupKeyForProvider(prov.id);
+                                }
+                              }}
+                              placeholder="Dán thêm 1 hoặc nhiều Key dự phòng cách nhau bằng dấu phẩy..."
+                              className="flex-1 bg-[#141413] border border-[#383834] focus:border-red-500 rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none"
+                            />
+                            <button
+                              onClick={() => addBackupKeyForProvider(prov.id)}
+                              className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold shrink-0 transition shadow-xs"
+                            >
+                              + Thêm Key Swap
+                            </button>
+                          </div>
+                        </div>
+
+                        {pool.length > 0 && (
+                          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                            {pool.map((k, kIdx) => {
+                              const isDead = Boolean(deadMap[k]);
+                              return (
+                                <div
+                                  key={k + '-' + kIdx}
+                                  className={`flex items-center justify-between px-3 py-1.5 rounded-lg border ${
+                                    kIdx === 0
+                                      ? 'bg-red-950/30 border-red-500/50 text-white'
+                                      : 'bg-[#1C1C1A] border-[#2C2C29] text-neutral-300'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${kIdx === 0 ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}>
+                                      {kIdx === 0 ? '★ Key Chính' : `Dự phòng #${kIdx}`}
+                                    </span>
+                                    <span className="font-mono text-xs truncate">{maskApiKey(k)}</span>
+                                    {isDead && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
+                                        Đã Swap ({deadMap[k]})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {kIdx > 0 && (
+                                      <button
+                                        onClick={() => promoteSpecificKeyToPrimary(prov.id, k)}
+                                        className="px-2 py-0.5 rounded bg-red-600/20 hover:bg-red-600/40 text-red-300 text-[10px] font-semibold"
+                                      >
+                                        Đặt làm chính
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => removeKeyFromProviderPool(prov.id, k)}
+                                      className="p-1 rounded hover:bg-red-500/20 text-neutral-400 hover:text-red-400"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="px-6 py-3.5 border-t border-[#2C2C29] bg-[#181816] flex justify-end">
+                  <button
+                    onClick={() => {
+                      ['anthropic', 'gemini', 'openai'].forEach((p) => {
+                        if ((newBackupKeyInput[p] || '').trim()) addBackupKeyForProvider(p);
+                      });
+                      setShowApiModal(false);
+                      showToast('Đã lưu cấu hình API & danh sách Key!');
+                    }}
+                    className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+                  >
+                    Lưu & Hoàn tất
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
